@@ -6,10 +6,8 @@ class WorkoutsController < ApplicationController
     user = User.find_by(slug: params[:slug])
     return head(:not_found) unless user
 
-    workout_sessions = user.workout_sessions.map(&:to_client_json)
-
     respond_to do |format|
-      format.json { render json: workout_sessions }
+      format.json { render json: user.workout_sessions.order(:date) }
     end
   end
 end

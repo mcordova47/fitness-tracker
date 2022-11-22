@@ -7,10 +7,10 @@ module Workouts
 
     has_many :sets
 
-    def to_client_json
+    def as_json(*)
       {
         kind: kind,
-        sets: sets.order(:created_at).map.with_index { |s, i| s.to_client_json(set_number: i + 1) }
+        sets: sets.order(:created_at)
       }
     end
   end

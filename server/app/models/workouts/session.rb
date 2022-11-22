@@ -5,11 +5,11 @@ module Workouts
   class Session < ApplicationRecord
     has_many :exercises
 
-    def to_client_json
+    def as_json(*)
       {
         date: date,
         muscleGroup: muscle_group,
-        exercises: exercises.map(&:to_client_json)
+        exercises: exercises
       }
     end
   end

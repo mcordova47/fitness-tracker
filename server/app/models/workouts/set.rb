@@ -5,11 +5,10 @@ module Workouts
   class Set < ApplicationRecord
     belongs_to :exercise
 
-    def to_client_json(set_number:)
+    def as_json(*)
       {
         reps: reps,
-        weight: weight,
-        setNumber: set_number
+        weight: weight
       }
     end
   end
