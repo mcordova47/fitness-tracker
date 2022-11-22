@@ -5,6 +5,7 @@ import Prelude
 import Effect (Effect)
 import Elmish.Boot (defaultMain)
 import Elmish.HTML.Styled as H
+import Pages.Charts as Charts
 
 main :: Effect Unit
 main = defaultMain
@@ -16,4 +17,8 @@ main = defaultMain
   , elementId: "app"
   }
   where
-    view = H.h1 "" "Fitness tracker"
+    view =
+      H.div "pt-3 px-3"
+      [ H.h1 "" "Fitness tracker"
+      , Charts.view
+      ]
