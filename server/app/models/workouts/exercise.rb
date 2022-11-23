@@ -10,9 +10,8 @@ module Workouts
 
     def as_json(*)
       {
-        kind: kind,
+        kind: exercise_kind.kind,
         sets: sets.order(:created_at)
-
       }
     end
   end
