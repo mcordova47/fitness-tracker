@@ -1,8 +1,12 @@
 module Components.Recharts.Line
-  ( LineType
+  ( DataKey(..)
+  , LineType
   , basis
   , basisClosed
   , basisOpen
+  , dataKeyFunction
+  , dataKeyInt
+  , dataKeyString
   , line
   , linear
   , linearClosed
@@ -16,16 +20,32 @@ module Components.Recharts.Line
   )
   where
 
+import Prelude
+
+import Data.Function.Uncurried (mkFn1)
 import Data.Undefined.NoProblem (Opt)
 import Data.Undefined.NoProblem.Closed as Closed
 import Elmish (ReactElement, createElement')
 import Elmish.Foreign (class CanPassToJavaScript)
 import Elmish.React.Import (ImportedReactComponent)
+import Unsafe.Coerce (unsafeCoerce)
 
 type LineProps =
   { type :: Opt LineType
-  , dataKey :: String
+  , dataKey :: DataKey
   }
+
+data DataKey
+instance CanPassToJavaScript DataKey
+
+dataKeyFunction :: forall a. (a -> Number) -> DataKey
+dataKeyFunction = unsafeCoerce <<< mkFn1
+
+dataKeyString :: String -> DataKey
+dataKeyString = unsafeCoerce
+
+dataKeyInt :: Int -> DataKey
+dataKeyInt = unsafeCoerce
 
 newtype LineType = LineType String
 instance CanPassToJavaScript LineType

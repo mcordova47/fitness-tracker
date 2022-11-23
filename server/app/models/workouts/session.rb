@@ -3,6 +3,8 @@
 module Workouts
   # A workout session
   class Session < ApplicationRecord
+    belongs_to :user
+
     has_many :exercises
 
     def as_json(*)
