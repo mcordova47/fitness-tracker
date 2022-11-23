@@ -32,10 +32,10 @@ view = Hooks.component Hooks.do
       liftEffect $ setExerciseHistory $ exerciseHistory s
 
   Hooks.pure $
-    H.div "row" $
+    H.div "row mt-3" $
       exerciseHistory' # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
         H.div "col-12 col-md-6 col-lg-4" $
-          H.div "card" $
+          H.div "card mb-3" $
             H.div "card-body"
             [ H.h2 "" kind
             , responsiveContainer { height: pixels 300.0 } $

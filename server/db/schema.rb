@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_22_033547) do
+ActiveRecord::Schema.define(version: 2022_11_23_051745) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -23,11 +23,20 @@ ActiveRecord::Schema.define(version: 2022_11_22_033547) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "workouts_exercise_kinds", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "kind"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_workouts_exercise_kinds_on_user_id"
+  end
+
   create_table "workouts_exercises", force: :cascade do |t|
-    t.string "kind", null: false
     t.bigint "session_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.bigint "exercise_kind_id", null: false
+    t.index ["exercise_kind_id"], name: "index_workouts_exercises_on_exercise_kind_id"
     t.index ["session_id"], name: "index_workouts_exercises_on_session_id"
   end
 
@@ -49,6 +58,7 @@ ActiveRecord::Schema.define(version: 2022_11_22_033547) do
     t.index ["exercise_id"], name: "index_workouts_sets_on_exercise_id"
   end
 
+  add_foreign_key "workouts_exercise_kinds", "users"
   add_foreign_key "workouts_exercises", "workouts_sessions", column: "session_id", on_delete: :cascade
   add_foreign_key "workouts_sessions", "users"
   add_foreign_key "workouts_sets", "workouts_exercises", column: "exercise_id", on_delete: :cascade
