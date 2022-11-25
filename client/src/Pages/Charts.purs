@@ -27,7 +27,6 @@ import Elmish (ReactElement)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
 
--- POC for charts
 view :: ReactElement
 view = Hooks.component Hooks.do
   exerciseHistory' /\ setExerciseHistory <- Hooks.useState Map.empty
