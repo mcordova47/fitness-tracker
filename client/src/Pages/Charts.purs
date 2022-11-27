@@ -29,34 +29,45 @@ import Elmish.Hooks as Hooks
 
 view :: ReactElement
 view = Hooks.component Hooks.do
-  exerciseHistory' /\ setExerciseHistory <- Hooks.useState Map.empty
+  exerciseHistory' /\ setExerciseHistory <- Hooks.useState Nothing
   modal /\ setModal <- Hooks.useState Nothing
 
   Hooks.useEffect do
     sessions <- Api.sessions "Ms1WqYNb" -- TODO: Don’t hardcode id
     for_ sessions \s ->
-      liftEffect $ setExerciseHistory $ exerciseHistory s
+      liftEffect $ setExerciseHistory $ Just $ exerciseHistory s
 
   Hooks.pure $ H.fragment
     [ H.div "row mt-3" $
-        exerciseHistory' # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
-          H.div "col-12 col-md-6 col-lg-4" $
-            H.div "card lift mb-3" $
-              H.div "card-body"
-              [ H.h6_ "card-title text-uppercase text-secondary"
-                  { onClick: setModal $ Just kind, role: "button" }
-                  kind
-              , responsiveContainer { height: pixels 300.0 } $
-                  lineChart { data: setHistories } $
-                    maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 <#> \index ->
-                      line
-                        { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
-                        , type: monotone
-                        , stroke: color index
-                        }
+        case exerciseHistory' of
+          Just history -> H.fragment $
+            history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
+              H.div "col-12 col-md-6 col-lg-4" $
+                H.div "card lift mb-3" $
+                  H.div "card-body"
+                  [ H.h6_ "card-title text-uppercase text-secondary"
+                      { onClick: setModal $ Just kind, role: "button" }
+                      kind
+                  , responsiveContainer { height: pixels 300.0 } $
+                      lineChart { data: setHistories } $
+                        maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 <#> \index ->
+                          line
+                            { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
+                            , type: monotone
+                            , stroke: color index
+                            }
+                  ]
+          Nothing ->
+            H.div "position-absolute top-0 bottom-0 start-0 end-0 d-flex justify-content-center align-items-center" $
+              H.div "spinner-grow spinner-grow-xl text-white display-4"
+              [ H.text "❤️"
+              , H.span "sr-only" "Loading…"
               ]
-    , case modal of
-        Just kind | Just setHistories <- Map.lookup kind exerciseHistory' -> H.fragment
+    , fromMaybe H.empty do
+        kind <- modal
+        history <- exerciseHistory'
+        setHistories <- Map.lookup kind history
+        pure $ H.fragment
           [ H.div "modal fade show d-block" $
               H.div "modal-dialog modal-fullscreen" $
                 H.div "modal-content"
@@ -86,8 +97,6 @@ view = Hooks.component Hooks.do
                 ]
           , H.div "modal-backdrop fade show" H.empty
           ]
-        _ ->
-          H.empty
     ]
 
 exerciseHistory :: Array Api.Session -> Map String (Array { date :: JSDate, weights :: Array Number })
@@ -98,7 +107,6 @@ exerciseHistory = foldl insertExerciseHistories Map.empty
 
     insertExerciseHistory session history exercise =
       Map.insertWith (<>) exercise.kind [{ date: session.date, weights: _.weight <$> exercise.sets }] history
-
 
 color :: Int -> String
 color index = colors !! (index `mod` length colors) # fromMaybe default
