@@ -4,7 +4,7 @@
 			"path": "."
 		},
 		{
-			"path": "client"
+			"path": "server/app/assets/purs"
 		}
 	],
 	"settings": {}
