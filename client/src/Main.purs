@@ -8,6 +8,7 @@ import Elmish.Boot (defaultMain)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
 import Pages.Charts as Charts
+import Pages.WorkOut as WorkOut
 
 main :: Effect Unit
 main = defaultMain
@@ -20,8 +21,10 @@ main = defaultMain
   }
   where
     view = Hooks.component Hooks.do
+      let userId = "Ms1WqYNb" -- TODO: Don’t hardcode id
       page /\ setPage <- Hooks.useState Progress
       navExpanded /\ setNavExpanded <- Hooks.useState false
+      
       Hooks.pure $
         H.div "pt-3 px-3"
         [ H.nav "navbar navbar-expand-md navbar-light bg-light" $
@@ -43,8 +46,8 @@ main = defaultMain
                 ]
             ]
         , case page of
-            Progress -> Charts.view
-            WorkOut -> H.empty -- TODO: Implement
+            Progress -> Charts.view { userId }
+            WorkOut -> WorkOut.view { userId }
         ]
 
     navItem itemPage currentPage setPage label =

@@ -27,13 +27,17 @@ import Elmish (ReactElement)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
 
-view :: ReactElement
-view = Hooks.component Hooks.do
+type Props =
+  { userId :: String
+  }
+
+view :: Props -> ReactElement
+view props = Hooks.component Hooks.do
   exerciseHistory' /\ setExerciseHistory <- Hooks.useState Nothing
   modal /\ setModal <- Hooks.useState Nothing
 
   Hooks.useEffect do
-    sessions <- Api.sessions "Ms1WqYNb" -- TODO: Don’t hardcode id
+    sessions <- Api.sessions props.userId
     for_ sessions \s ->
       liftEffect $ setExerciseHistory $ Just $ exerciseHistory s
 
