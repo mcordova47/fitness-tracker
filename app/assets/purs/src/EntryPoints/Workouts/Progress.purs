@@ -3,12 +3,9 @@ module EntryPoints.Workouts.Progress
   )
   where
 
-import Prelude
-
 import Elmish.Boot (BootRecord)
 import Layout as Layout
 import Pages.Progress as Progress
-import Utils.Boot (bootPure)
 
 type Props =
   { activePage :: String
@@ -16,6 +13,5 @@ type Props =
   }
 
 boot :: BootRecord Props
-boot = bootPure \{ activePage, userId } ->
-  Layout.view { activePage, userId } $
-    Progress.view { userId }
+boot = Layout.bootPage \props ->
+  Progress.view { userId: props.userId }

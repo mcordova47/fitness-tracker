@@ -11,12 +11,13 @@ import Elmish.HTML.Styled as H
 import Elmish.Hooks ((=/>))
 import Elmish.Hooks as Hooks
 
-type Props =
+type Props r =
   { activePage :: String
   , userId :: String
+  | r
   }
 
-view :: Props -> ReactElement
+view :: ∀ r. Props r -> ReactElement
 view { activePage, userId } =
   Hooks.useState false =/> \expanded setExpanded ->
     H.nav "navbar navbar-expand-md navbar-light bg-light" $
