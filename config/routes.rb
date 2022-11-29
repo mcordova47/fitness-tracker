@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  get 'workouts/:user_id/progress', to: 'workouts#progress'
-  get 'workouts/:user_id/workout', to: 'workouts#workout'
-  namespace :workouts do
+  namespace :workouts, path: ':user_id/workouts' do
+    get 'progress'
+    get 'workout'
     get 'sessions'
     get 'todays_session'
     post 'save_session'

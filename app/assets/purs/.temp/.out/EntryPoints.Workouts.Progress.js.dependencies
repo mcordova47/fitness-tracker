@@ -4171,7 +4171,7 @@
       ]
     },
     "output/Layout.Nav/index.js": {
-      "bytes": 2441,
+      "bytes": 2470,
       "imports": [
         {
           "path": "output/Elmish.HTML.Styled.Generated/index.js",
@@ -4196,7 +4196,7 @@
       ]
     },
     "output/Layout/index.js": {
-      "bytes": 599,
+      "bytes": 635,
       "imports": [
         {
           "path": "output/Elmish.HTML.Styled.Generated/index.js",
@@ -5879,7 +5879,7 @@
       ]
     },
     "output/Api/index.js": {
-      "bytes": 3706,
+      "bytes": 3679,
       "imports": [
         {
           "path": "output/Affjax.RequestBody/index.js",
@@ -18849,7 +18849,7 @@
           "bytesInOutput": 36
         },
         "output/Layout.Nav/index.js": {
-          "bytesInOutput": 731
+          "bytesInOutput": 735
         },
         "output/Layout/index.js": {
           "bytesInOutput": 138
@@ -19758,7 +19758,7 @@
           "bytesInOutput": 151
         }
       },
-      "bytes": 623861
+      "bytes": 623865
     }
   }
 }

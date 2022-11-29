@@ -11,7 +11,7 @@ class WorkoutsController < ApplicationController
   def workout; end
 
   def sessions
-    user = User.find_by(slug: params[:slug])
+    user = User.find_by(slug: params[:user_id])
     return head(:not_found) unless user
 
     respond_to do |format|
@@ -20,7 +20,7 @@ class WorkoutsController < ApplicationController
   end
 
   def todays_session
-    user = User.find_by(slug: params[:slug])
+    user = User.find_by(slug: params[:user_id])
     return head(:not_found) unless user
 
     session = user.workout_sessions.find_by(date: Time.zone.today)

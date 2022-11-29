@@ -22,7 +22,7 @@ view { activePage, userId } =
     H.nav "navbar navbar-expand-md navbar-light bg-light" $
       H.div "container-fluid"
       [ H.a_ "navbar-brand"
-          { href: "/workouts/" <> userId <> "/progress" }
+          { href: href "progress" }
           "Fitness tracker"
       , H.button_ "navbar-toggler"
           { type: "button"
@@ -39,6 +39,9 @@ view { activePage, userId } =
     navItem page label =
       H.li "nav-item" $
         H.a_ ("nav-link" <> if page == activePage then " active" else "")
-          { href: "/workouts/" <> userId <> "/" <> page }
+          { href: href page }
           label
+
+    href page =
+      "/" <> userId <> "/workouts/" <> page
 
