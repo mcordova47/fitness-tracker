@@ -47,7 +47,7 @@ type Set =
 
 sessions :: String -> Aff (Maybe (Array Session))
 sessions userId = do
-  raw <- Affjax.get json $ "http://localhost:3000/" <> userId <> "/workouts/sessions" -- TODO: Fix URL
+  raw <- Affjax.get json $ "/" <> userId <> "/workouts/sessions"
   for (hush raw) \{ body } ->
     for (unsafeCoerce body :: Array SessionRaw) \session -> do -- TODO: Use argonaut instead of `unsafeCoerce`
       date <- liftEffect $ JSDate.parse session.date
@@ -55,7 +55,7 @@ sessions userId = do
 
 todaysSession :: String -> Aff (Maybe Session)
 todaysSession userId = do
-  raw <- Affjax.get json $ "http://localhost:3000/" <> userId <> "/workouts/todays_session" -- TODO: Fix URL
+  raw <- Affjax.get json $ "/" <> userId <> "/workouts/todays_session"
   join <$> for (hush raw) \{ body } ->
     for (Nullable.toMaybe (unsafeCoerce body :: Nullable SessionRaw)) \session -> do -- TODO: Use argonaut instead of `unsafeCoerce`
       date <- liftEffect $ JSDate.parse session.date
@@ -63,7 +63,7 @@ todaysSession userId = do
 
 saveSession :: { userId :: String, muscleGroup :: String } -> Aff (Maybe Session)
 saveSession { userId, muscleGroup } = do
-  raw <- Affjax.post json ("http://localhost:3000/" <> userId <> "/workouts/save_session") $ -- TODO: Fix URL
+  raw <- Affjax.post json ("/" <> userId <> "/workouts/save_session") $
     Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous { muscle_group: Json.fromString muscleGroup }
   for (hush raw) \{ body } -> do
     let session = unsafeCoerce body :: SessionRaw -- TODO: Use argonaut instead of `unsafeCoerce`
