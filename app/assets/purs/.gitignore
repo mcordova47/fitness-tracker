@@ -8,4 +8,4 @@ generated-docs/
 .purs*
 .psa*
 .spago
-.temp
+.temp/
