@@ -1,4 +1,4 @@
-module Pages.Charts
+module Pages.Progress
   ( view
   )
   where

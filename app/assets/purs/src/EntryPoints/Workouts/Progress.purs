@@ -7,7 +7,7 @@ import Prelude
 
 import Elmish.Boot (BootRecord)
 import Layout as Layout
-import Pages.Charts as Charts
+import Pages.Progress as Progress
 import Utils.Boot (bootPure)
 
 type Props =
@@ -18,4 +18,4 @@ type Props =
 boot :: BootRecord Props
 boot = bootPure \{ activePage, userId } ->
   Layout.view { activePage, userId } $
-    Charts.view { userId }
+    Progress.view { userId }
