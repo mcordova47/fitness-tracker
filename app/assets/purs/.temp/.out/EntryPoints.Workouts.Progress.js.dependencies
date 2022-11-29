@@ -4196,7 +4196,7 @@
       ]
     },
     "output/Layout/index.js": {
-      "bytes": 494,
+      "bytes": 599,
       "imports": [
         {
           "path": "output/Elmish.HTML.Styled.Generated/index.js",
@@ -18024,7 +18024,7 @@
           "bytesInOutput": 59
         },
         "node_modules/lodash/_getSymbols.js": {
-          "bytesInOutput": 238
+          "bytesInOutput": 240
         },
         "node_modules/lodash/_baseTimes.js": {
           "bytesInOutput": 105
@@ -18852,7 +18852,7 @@
           "bytesInOutput": 731
         },
         "output/Layout/index.js": {
-          "bytesInOutput": 84
+          "bytesInOutput": 138
         },
         "output/Data.MediaType.Common/index.js": {
           "bytesInOutput": 65
@@ -19758,7 +19758,7 @@
           "bytesInOutput": 151
         }
       },
-      "bytes": 623805
+      "bytes": 623861
     }
   }
 }

@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-# Support for PureScript files
-module FrontendHelper
+# Support for purescript-elmish components
+module ElmishHelper
   def purescript_include_tag(purs_file)
     javascript_include_tag(purs_file, extname: false)
   end
 
-  def frontend_component(name, props: {}, html_class: '')
+  def elmish_component(name, props: {}, html_class: '')
     unique_id = SecureRandom.uuid.to_s[0..7]
-    client_script = __frontend_client_script_mount(name, unique_id, props)
+    client_script = __elmish_client_script_mount(name, unique_id, props)
 
     content_for :page_scripts do
       @view_helper_frontend_included ||= {}
@@ -20,7 +20,7 @@ module FrontendHelper
     content_tag :div, '', id: unique_id, class: html_class
   end
 
-  def __frontend_client_script_mount(module_name, container_id, props) # rubocop:disable Metrics/MethodLength
+  def __elmish_client_script_mount(module_name, container_id, props) # rubocop:disable Metrics/MethodLength
     "
     var boot = Purs_EntryPoints_#{module_name.gsub('/', '_')}.boot
     var mount = boot && (boot.mount || boot)

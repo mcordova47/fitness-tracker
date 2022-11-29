@@ -31,21 +31,23 @@ view { userId } = Hooks.component Hooks.do
   Hooks.pure $
     case session of
       Just s -> H.text $ "Muscle Group: " <> s.muscleGroup
-      Nothing -> H.fragment
-        [ H.label_ "form-label"
-            { htmlFor: "muscle-group-input" }
-            "Which muscle group are you working out today?"
-        , H.input_ "form-control"
-            { id: "muscle-group-input"
-            , value: muscleGroup
-            , onChange: setMuscleGroup <?| \event -> do
-                e :: { target :: { value :: _ } } <- readForeign event
-                pure e.target.value
-            }
-        , H.button_ "btn btn-primary"
-            { onClick: launchAff_ do
-                s <- Api.saveSession { muscleGroup, userId }
-                liftEffect $ setSession s
-            }
-            "Save"
-        ]
+      Nothing ->
+        H.div "h-100 d-flex align-items-center justify-content-center" $
+          H.div "text-center"
+          [ H.label_ "form-label"
+              { htmlFor: "muscle-group-input" }
+              "Which muscle group are you working out today?"
+          , H.input_ "form-control"
+              { id: "muscle-group-input"
+              , value: muscleGroup
+              , onChange: setMuscleGroup <?| \event -> do
+                  e :: { target :: { value :: _ } } <- readForeign event
+                  pure e.target.value
+              }
+          , H.button_ "btn btn-primary btn-block w-100 mt-3"
+              { onClick: launchAff_ do
+                  s <- Api.saveSession { muscleGroup, userId }
+                  liftEffect $ setSession s
+              }
+              "Save"
+          ]

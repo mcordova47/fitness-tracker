@@ -2,9 +2,13 @@
 
 # The controller for the workouts API
 class WorkoutsController < ApplicationController
-  def progress
-    @user_id = params[:user_id] # Ms1WqYNb
+  before_action only: %i[progress workout] do
+    @user_id = params[:user_id]
   end
+
+  def progress; end
+
+  def workout; end
 
   def sessions
     user = User.find_by(slug: params[:slug])
