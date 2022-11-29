@@ -6,7 +6,6 @@ module Layout.Nav
 
 import Prelude
 
-import Data.Tuple.Nested ((/\))
 import Elmish (ReactElement)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks ((=/>))
@@ -19,7 +18,7 @@ type Props =
 
 view :: Props -> ReactElement
 view { activePage, userId } =
-  Hooks.useState false =/> \navExpanded setNavExpanded ->
+  Hooks.useState false =/> \expanded setExpanded ->
     H.nav "navbar navbar-expand-md navbar-light bg-light" $
       H.div "container-fluid"
       [ H.a_ "navbar-brand"
@@ -27,10 +26,10 @@ view { activePage, userId } =
           "Fitness tracker"
       , H.button_ "navbar-toggler"
           { type: "button"
-          , onClick: setNavExpanded (not navExpanded)
+          , onClick: setExpanded (not expanded)
           } $
           H.span "navbar-toggler-icon" H.empty
-      , H.div ("collapse navbar-collapse" <> if navExpanded then " show" else "") $
+      , H.div ("collapse navbar-collapse" <> if expanded then " show" else "") $
           H.ul "navbar-nav"
           [ navItem "progress" "View progress"
           , navItem "workout" "Work out"
