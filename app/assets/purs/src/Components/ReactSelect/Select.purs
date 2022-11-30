@@ -17,7 +17,8 @@ type Props =
   { onChange :: EffectFn1 Option Unit
   , options :: Array Option
   , placeholder :: Opt String
-  , value :: Nullable Option
+  , value :: Opt (Nullable Option)
+  , defaultValue :: Opt (Nullable Option)
   }
 
 type Option =
