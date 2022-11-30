@@ -9,9 +9,13 @@ import Pages.WorkOut as WorkOut
 
 type Props =
   { activePage :: String
+  , muscleGroups :: Array { name :: String }
   , userId :: String
   }
 
 boot :: BootRecord Props
 boot = Layout.bootPage \props ->
-  WorkOut.view { userId: props.userId }
+  WorkOut.view
+    { muscleGroups: props.muscleGroups
+    , userId: props.userId
+    }

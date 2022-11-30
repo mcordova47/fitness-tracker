@@ -22,6 +22,7 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
 import Data.Nullable as Nullable
 import Data.Traversable (for)
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign.Object as FO
@@ -31,7 +32,7 @@ type Session = Session' JSDate
 type SessionRaw = Session' String
 type Session' date =
   { date :: date
-  , muscleGroup :: String
+  , muscleGroup :: { name :: String }
   , exercises :: Array Exercise
   }
 
@@ -63,9 +64,15 @@ todaysSession userId = do
 
 saveSession :: { userId :: String, muscleGroup :: String } -> Aff (Maybe Session)
 saveSession { userId, muscleGroup } = do
+  token <- liftEffect authenticityToken
   raw <- Affjax.post json ("/" <> userId <> "/workouts/save_session") $
-    Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous { muscle_group: Json.fromString muscleGroup }
+    Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
+      { muscle_group: Json.fromString muscleGroup
+      , authenticity_token: Json.fromString token
+      }
   for (hush raw) \{ body } -> do
     let session = unsafeCoerce body :: SessionRaw -- TODO: Use argonaut instead of `unsafeCoerce`
     date <- liftEffect $ JSDate.parse session.date
     pure session { date = date }
+
+foreign import authenticityToken :: Effect String

@@ -4,6 +4,7 @@ module Workouts
   # A workout session
   class Session < ApplicationRecord
     belongs_to :user
+    belongs_to :muscle_group
 
     has_many :exercises
 

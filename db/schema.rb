@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_23_051745) do
+ActiveRecord::Schema.define(version: 2022_11_30_053201) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -40,12 +40,21 @@ ActiveRecord::Schema.define(version: 2022_11_23_051745) do
     t.index ["session_id"], name: "index_workouts_exercises_on_session_id"
   end
 
+  create_table "workouts_muscle_groups", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "user_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_workouts_muscle_groups_on_user_id"
+  end
+
   create_table "workouts_sessions", force: :cascade do |t|
     t.date "date", null: false
-    t.string "muscle_group", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.bigint "user_id", null: false
+    t.bigint "muscle_group_id", null: false
+    t.index ["muscle_group_id"], name: "index_workouts_sessions_on_muscle_group_id"
     t.index ["user_id"], name: "index_workouts_sessions_on_user_id"
   end
 

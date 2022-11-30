@@ -7,8 +7,10 @@ class UploadWorkoutSessions < ApplicationJob
   def perform(user, file_path) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     CSV.read(file_path, headers: true).each do |row|
       Workouts::Session.transaction do
-        session = Workouts::Session.find_or_create_by!(date: Date.strptime(row['Date'], '%m/%d/%y'), user: user) do |s|
-          s.muscle_group = row['Muscle Group']
+        muscle_group = user.muscle_groups.find_or_create_by!(name: row['Muscle Group'])
+
+        session = user.workout_sessions.find_or_create_by!(date: Date.strptime(row['Date'], '%m/%d/%y')) do |s|
+          s.muscle_group = muscle_group
         end
 
         exercise_kind = user.exercise_kinds.find_or_create_by!(kind: row['Exercise'])

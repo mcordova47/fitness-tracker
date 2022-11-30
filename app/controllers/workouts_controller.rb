@@ -8,7 +8,12 @@ class WorkoutsController < ApplicationController
 
   def progress; end
 
-  def workout; end
+  def workout
+    user = User.find_by(slug: @user_id)
+    return head(:not_found) unless user
+
+    @muscle_groups = user.muscle_groups
+  end
 
   def sessions
     user = User.find_by(slug: params[:user_id])
@@ -33,7 +38,8 @@ class WorkoutsController < ApplicationController
     user = User.find_by(slug: params[:user_id])
     return head(:not_found) unless user
 
-    session = user.workout_sessions.create!(date: Time.zone.today, muscle_group: params[:muscle_group])
+    muscle_group = user.muscle_groups.find_or_create_by!(name: params[:muscle_group])
+    session = user.workout_sessions.create!(date: Time.zone.today, muscle_group: muscle_group)
     respond_to do |format|
       format.json { render json: session }
     end
