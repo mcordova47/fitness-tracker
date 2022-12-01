@@ -3,6 +3,7 @@ module Api
   , Session
   , Session'
   , Set
+  , createExerciseKind
   , saveSession
   , sessions
   , todaysSession
@@ -74,5 +75,15 @@ saveSession { userId, muscleGroup } = do
     let session = unsafeCoerce body :: SessionRaw -- TODO: Use argonaut instead of `unsafeCoerce`
     date <- liftEffect $ JSDate.parse session.date
     pure session { date = date }
+
+createExerciseKind :: { userId :: String, kind :: String } -> Aff Unit
+createExerciseKind { userId, kind } = do
+  token <- liftEffect authenticityToken
+  _ <- Affjax.post json ("/" <> userId <> "/workouts/create_exercise_kind") $
+    Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
+      { exercise_kind: Json.fromString kind
+      , authenticity_token: Json.fromString token
+      }
+  pure unit
 
 foreign import authenticityToken :: Effect String

@@ -7,5 +7,6 @@ Rails.application.routes.draw do
     get 'sessions'
     get 'todays_session'
     post 'save_session'
+    post 'create_exercise_kind'
   end
 end
