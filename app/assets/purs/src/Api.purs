@@ -3,8 +3,8 @@ module Api
   , Session
   , Session'
   , Set
-  , createExerciseKind
-  , saveSession
+  , createExercise
+  , createSession
   , sessions
   , todaysSession
   )
@@ -63,10 +63,10 @@ todaysSession userId = do
       date <- liftEffect $ JSDate.parse session.date
       pure session { date = date }
 
-saveSession :: { userId :: String, muscleGroup :: String } -> Aff (Maybe Session)
-saveSession { userId, muscleGroup } = do
+createSession :: { userId :: String, muscleGroup :: String } -> Aff (Maybe Session)
+createSession { userId, muscleGroup } = do
   token <- liftEffect authenticityToken
-  raw <- Affjax.post json ("/" <> userId <> "/workouts/save_session") $
+  raw <- Affjax.post json ("/" <> userId <> "/workouts/create_session") $
     Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
       { muscle_group: Json.fromString muscleGroup
       , authenticity_token: Json.fromString token
@@ -76,10 +76,10 @@ saveSession { userId, muscleGroup } = do
     date <- liftEffect $ JSDate.parse session.date
     pure session { date = date }
 
-createExerciseKind :: { userId :: String, kind :: String } -> Aff Unit
-createExerciseKind { userId, kind } = do
+createExercise :: { userId :: String, kind :: String } -> Aff Unit
+createExercise { userId, kind } = do
   token <- liftEffect authenticityToken
-  _ <- Affjax.post json ("/" <> userId <> "/workouts/create_exercise_kind") $
+  _ <- Affjax.post json ("/" <> userId <> "/workouts/create_exercise") $
     Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
       { exercise_kind: Json.fromString kind
       , authenticity_token: Json.fromString token

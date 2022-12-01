@@ -57,8 +57,8 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         , modal
             { content:
                 creatableSelect
-                  { onChange: createExerciseKind session setView _.value
-                  , onCreateOption: createExerciseKind session setView identity
+                  { onChange: createExercise session setView _.value
+                  , onCreateOption: createExercise session setView identity
                   , options: exerciseKinds <#> \{ kind } -> { label: kind, value: kind }
                   , placeholder: "Select an exercise"
                   , defaultValue: Nullable.null
@@ -141,14 +141,14 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
 
     createSession :: ∀ opt. (View -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
     createSession setView toValue = mkEffectFn1 \mg -> launchAff_ do
-      mSession <- Api.saveSession { muscleGroup: toValue mg, userId }
+      mSession <- Api.createSession { muscleGroup: toValue mg, userId }
       for_ mSession \session ->
         liftEffect $ setView $ AddExercises session
 
-    createExerciseKind :: ∀ opt. Api.Session -> (View -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
-    createExerciseKind session setView toValue = mkEffectFn1 \e -> launchAff_ do
+    createExercise :: ∀ opt. Api.Session -> (View -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
+    createExercise session setView toValue = mkEffectFn1 \e -> launchAff_ do
       let kind = toValue e
-      Api.createExerciseKind { kind, userId }
+      Api.createExercise { kind, userId }
       liftEffect $ setView $ AddSets
         session { exercises = session.exercises <> [{ kind, sets: [] }] }
         { kind }

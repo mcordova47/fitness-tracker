@@ -35,7 +35,7 @@ class WorkoutsController < ApplicationController
     end
   end
 
-  def save_session
+  def create_session
     user = User.find_by(slug: params[:user_id])
     return head(:not_found) unless user
 
@@ -46,7 +46,7 @@ class WorkoutsController < ApplicationController
     end
   end
 
-  def create_exercise_kind # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+  def create_exercise # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     user = User.find_by(slug: params[:user_id])
     return head(:not_found) unless user
 
