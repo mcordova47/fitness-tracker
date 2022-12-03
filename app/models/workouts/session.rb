@@ -10,6 +10,7 @@ module Workouts
 
     def as_json(*)
       {
+        id: id,
         date: date,
         muscleGroup: muscle_group,
         exercises: exercises

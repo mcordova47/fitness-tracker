@@ -8,5 +8,7 @@ Rails.application.routes.draw do
     get 'todays_session'
     post 'create_session'
     post 'create_exercise'
+    post 'add_set'
+    post 'update_set'
   end
 end

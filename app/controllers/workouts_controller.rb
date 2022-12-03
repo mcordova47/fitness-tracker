@@ -51,14 +51,43 @@ class WorkoutsController < ApplicationController
     return head(:not_found) unless user
 
     exercise_kind = user.exercise_kinds.find_or_create_by!(kind: params[:exercise_kind])
-    user
+    exercise =
+      user
       .workout_sessions
       .find_by(date: Time.zone.today)
       .exercises
       .create!(exercise_kind: exercise_kind)
 
     respond_to do |format|
-      format.json { render json: nil }
+      format.json { render json: exercise }
+    end
+  end
+
+  def add_set # rubocop:disable Metrics/AbcSize
+    user = User.find_by(slug: params[:user_id])
+    return head(:not_found) unless user
+
+    exercise = ::Workouts::Exercise.find(params[:exercise_id])
+    return head(:not_found) unless exercise.session.user == user
+
+    set = exercise.sets.create!(reps: params[:reps], weight: params[:weight])
+
+    respond_to do |format|
+      format.json { render json: set.exercise }
+    end
+  end
+
+  def update_set # rubocop:disable Metrics/AbcSize
+    user = User.find_by(slug: params[:user_id])
+    return head(:not_found) unless user
+
+    set = ::Workouts::Set.find(params[:id])
+    return head(:not_found) unless set.exercise.session.user == user
+
+    set.update!(reps: params[:reps], weight: params[:weight])
+
+    respond_to do |format|
+      format.json { render json: set.exercise }
     end
   end
 end

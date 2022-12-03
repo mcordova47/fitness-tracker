@@ -3,10 +3,12 @@ module Api
   , Session
   , Session'
   , Set
+  , addSet
   , createExercise
   , createSession
   , sessions
   , todaysSession
+  , updateSet
   )
   where
 
@@ -17,6 +19,7 @@ import Affjax.ResponseFormat (json)
 import Affjax.Web as Affjax
 import Data.Argonaut.Core as Json
 import Data.Either (hush)
+import Data.Int as Int
 import Data.JSDate (JSDate)
 import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
@@ -38,12 +41,14 @@ type Session' date =
   }
 
 type Exercise =
-  { kind :: String
+  { id :: Int
+  , kind :: String
   , sets :: Array Set
   }
 
 type Set =
-  { reps :: Int
+  { id :: Int
+  , reps :: Int
   , weight :: Number
   }
 
@@ -76,14 +81,38 @@ createSession { userId, muscleGroup } = do
     date <- liftEffect $ JSDate.parse session.date
     pure session { date = date }
 
-createExercise :: { userId :: String, kind :: String } -> Aff Unit
+createExercise :: { userId :: String, kind :: String } -> Aff (Maybe Exercise)
 createExercise { userId, kind } = do
   token <- liftEffect authenticityToken
-  _ <- Affjax.post json ("/" <> userId <> "/workouts/create_exercise") $
+  raw <- Affjax.post json ("/" <> userId <> "/workouts/create_exercise") $
     Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
       { exercise_kind: Json.fromString kind
       , authenticity_token: Json.fromString token
       }
-  pure unit
+  pure $ hush raw <#> \{ body } -> unsafeCoerce body :: Exercise -- TODO: Use argonaut instead of `unsafeCoerce`
+
+addSet :: { exerciseId :: Int, reps :: Int, userId :: String, weight :: Number } -> Aff (Maybe Exercise)
+addSet { exerciseId, reps, userId, weight } = do
+  token <- liftEffect authenticityToken
+  raw <- Affjax.post json ("/" <> userId <> "/workouts/add_set") $
+    Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
+      { exercise_id: Json.fromNumber $ Int.toNumber exerciseId
+      , reps: Json.fromNumber $ Int.toNumber reps
+      , weight: Json.fromNumber weight
+      , authenticity_token: Json.fromString token
+      }
+  pure $ hush raw <#> \{ body } -> unsafeCoerce body :: Exercise -- TODO: Use argonaut instead of `unsafeCoerce`
+
+updateSet :: { id :: Int, reps :: Int, userId :: String, weight :: Number } -> Aff (Maybe Exercise)
+updateSet { id, reps, userId, weight } = do
+  token <- liftEffect authenticityToken
+  raw <- Affjax.post json ("/" <> userId <> "/workouts/update_set") $
+    Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
+      { id: Json.fromNumber $ Int.toNumber id
+      , reps: Json.fromNumber $ Int.toNumber reps
+      , weight: Json.fromNumber weight
+      , authenticity_token: Json.fromString token
+      }
+  pure $ hush raw <#> \{ body } -> unsafeCoerce body :: Exercise -- TODO: Use argonaut instead of `unsafeCoerce`
 
 foreign import authenticityToken :: Effect String

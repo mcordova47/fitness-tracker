@@ -7,6 +7,7 @@ module Workouts
 
     def as_json(*)
       {
+        id: id,
         reps: reps,
         weight: weight
       }
