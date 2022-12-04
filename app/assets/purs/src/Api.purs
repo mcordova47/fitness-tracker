@@ -1,11 +1,14 @@
 module Api
   ( Exercise
+  , MuscleGroup
   , Session
   , Session'
   , Set
   , addSet
   , createExercise
   , createSession
+  , lastExercise
+  , lastSession
   , sessions
   , todaysSession
   , updateSet
@@ -36,7 +39,7 @@ type Session = Session' JSDate
 type SessionRaw = Session' String
 type Session' date =
   { date :: date
-  , muscleGroup :: { name :: String }
+  , muscleGroup :: MuscleGroup
   , exercises :: Array Exercise
   }
 
@@ -50,6 +53,11 @@ type Set =
   { id :: Int
   , reps :: Int
   , weight :: Number
+  }
+
+type MuscleGroup =
+  { id :: Int
+  , name :: String
   }
 
 sessions :: String -> Aff (Maybe (Array Session))
@@ -67,6 +75,19 @@ todaysSession userId = do
     for (Nullable.toMaybe (unsafeCoerce body :: Nullable SessionRaw)) \session -> do -- TODO: Use argonaut instead of `unsafeCoerce`
       date <- liftEffect $ JSDate.parse session.date
       pure session { date = date }
+
+lastSession :: String -> MuscleGroup -> Aff (Maybe Session)
+lastSession userId muscleGroup = do
+  raw <- Affjax.get json $ "/" <> userId <> "/workouts/last_session" <> "?muscle_group=" <> show muscleGroup.id
+  join <$> for (hush raw) \{ body } ->
+    for (Nullable.toMaybe (unsafeCoerce body :: Nullable SessionRaw)) \session -> do -- TODO: Use argonaut instead of `unsafeCoerce`
+      date <- liftEffect $ JSDate.parse session.date
+      pure session { date = date }
+
+lastExercise :: String -> String -> Aff (Maybe Exercise)
+lastExercise userId kind = do
+  raw <- Affjax.get json $ "/" <> userId <> "/workouts/last_exercise" <> "?kind=" <> kind
+  pure $ hush raw <#> \{ body } -> unsafeCoerce body :: Exercise -- TODO: Use argonaut instead of `unsafeCoerce`
 
 createSession :: { userId :: String, muscleGroup :: String } -> Aff (Maybe Session)
 createSession { userId, muscleGroup } = do

@@ -24,7 +24,7 @@ import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
 import Utils.Array (updateWhere)
 import Utils.Events (eventTargetValue)
-import Utils.Html ((?>))
+import Utils.Html ((&.>), (&>))
 
 type Props =
   { exerciseKinds :: Array ExerciseKind
@@ -62,11 +62,13 @@ derive instance Eq SetModal
 view :: Props -> ReactElement
 view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
   view' /\ setView <- Hooks.useState Loading
+  lastSession /\ setLastSession <- Hooks.useState Nothing
 
   Hooks.useEffect do
     Api.todaysSession userId >>= case _ of
-      Just session ->
+      Just session -> do
         liftEffect $ setView $ AddExercises { session, modal: false }
+        fetchLastSession session setLastSession
       Nothing ->
         liftEffect $ setView $ ChooseMuscleGroup { modal: true }
 
@@ -80,12 +82,12 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         , H.button_ "btn btn-link p-0"
             { onClick: setView $ ChooseMuscleGroup { modal: true } }
             "Choose a muscle group to begin"
-        , modal ?>
+        , modal &>
             modal'
               { content:
                   creatableSelect
-                    { onChange: createSession setView _.value
-                    , onCreateOption: createSession setView identity
+                    { onChange: createSession setView setLastSession _.value
+                    , onCreateOption: createSession setView setLastSession identity
                     , options: muscleGroups <#> \{ name } -> { label: name, value: name }
                     , placeholder: "Select muscle group"
                     , defaultValue: Nullable.null
@@ -97,7 +99,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
       AddExercises { session, modal } ->
         H.div "container pt-4"
         [ H.h3 "" $ session.muscleGroup.name <> " day"
-        , null session.exercises ?>
+        , null session.exercises &>
             H.div "text-muted mb-1" "Add some exercises below to get started"
         , H.div "list-group"
           [ H.fragment $ session.exercises <#> \exercise ->
@@ -116,7 +118,14 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
               }
               "+ Add an exercise"
           ]
-        , modal ?>
+        , lastSession &.> \{ exercises } ->
+            H.fragment
+            [ H.h5 "mt-5" "Here’s what you did last time"
+            , H.ul "list-group" $
+                exercises <#> \exercise ->
+                  H.li "list-group-item" exercise.kind
+            ]
+        , modal &>
             modal'
               { content:
                   creatableSelect
@@ -130,7 +139,42 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
               , title: "What’s up next?"
               }
         ]
-      AddSets s@{ exerciseKind, session } ->
+      AddSets s ->
+        addSetsView s setView
+  where
+    fetchLastSession session setLastSession =
+      Api.lastSession userId session.muscleGroup
+        >>= liftEffect <<< setLastSession
+
+    fetchLastExercise kind setLastExercise =
+      Api.lastExercise userId kind
+        >>= liftEffect <<< setLastExercise
+
+    createSession :: ∀ opt. (View -> Effect Unit) -> (Maybe Session -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
+    createSession setView setLastSession toValue = mkEffectFn1 \mg -> launchAff_ do
+      mSession <- Api.createSession { muscleGroup: toValue mg, userId }
+      for_ mSession \session -> do
+        liftEffect $ setView $ AddExercises { session, modal: false }
+        fetchLastSession session setLastSession
+
+    createExercise :: ∀ opt. Session -> (View -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
+    createExercise session setView toValue = mkEffectFn1 \e -> launchAff_ do
+      let kind = toValue e
+      mExercise <- Api.createExercise { kind, userId }
+      for_ mExercise \exercise ->
+        liftEffect $ setView $ AddSets
+          { exerciseKind: { kind }
+          , modal: Nothing
+          , session: session { exercises = session.exercises <> [exercise] }
+          }
+
+    addSetsView s@{ exerciseKind, session } setView = Hooks.component Hooks.do
+      lastExercise /\ setLastExercise <- Hooks.useState Nothing
+
+      Hooks.useEffect $
+        fetchLastExercise exerciseKind.kind setLastExercise
+
+      Hooks.pure $
         H.div "container pt-4"
         [ H.div ""
           [ H.a_ ""
@@ -143,7 +187,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         , fromMaybe H.empty do
             exercise <- session.exercises # find (eq exerciseKind.kind <<< _.kind)
             pure $ H.fragment
-              [ null exercise.sets ?>
+              [ null exercise.sets &>
                   H.div "text-muted mb-1" "Add a new set below to get started"
               , H.table "table table-hover"
                 [ H.thead "" $
@@ -166,26 +210,26 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                     ]
                   ]
                 ]
+              , lastExercise &.> \ex ->
+                  H.fragment
+                  [ H.h5 "mt-5" "Here’s what you did last time"
+                  , H.table "table"
+                    [ H.thead "" $
+                        H.tr ""
+                        [ H.th_ "" { scope: "col" } "Weight"
+                        , H.th_ "" { scope: "col" } "Reps"
+                        ]
+                    , H.tbody "" $
+                        ex.sets <#> \set ->
+                          H.tr ""
+                          [ H.th_ "" { scope: "row" } $ show set.weight
+                          , H.td "" $ show set.reps
+                          ]
+                    ]
+                  ]
               , addSetModal s exercise setView
               ]
         ]
-  where
-    createSession :: ∀ opt. (View -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
-    createSession setView toValue = mkEffectFn1 \mg -> launchAff_ do
-      mSession <- Api.createSession { muscleGroup: toValue mg, userId }
-      for_ mSession \session ->
-        liftEffect $ setView $ AddExercises { session, modal: false }
-
-    createExercise :: ∀ opt. Session -> (View -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
-    createExercise session setView toValue = mkEffectFn1 \e -> launchAff_ do
-      let kind = toValue e
-      mExercise <- Api.createExercise { kind, userId }
-      for_ mExercise \exercise ->
-        liftEffect $ setView $ AddSets
-          { exerciseKind: { kind }
-          , modal: Nothing
-          , session: session { exercises = session.exercises <> [exercise] }
-          }
 
     addSetModal { exerciseKind, modal, session } exercise setView =
       fromMaybe H.empty do

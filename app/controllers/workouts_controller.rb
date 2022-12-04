@@ -6,7 +6,7 @@ class WorkoutsController < ApplicationController
     @user_id = params[:user_id]
   end
 
-  def progress; end
+  def progress = nil
 
   def workout
     user = User.find_by(slug: @user_id)
@@ -32,6 +32,42 @@ class WorkoutsController < ApplicationController
     session = user.workout_sessions.find_by(date: Time.zone.today)
     respond_to do |format|
       format.json { render json: session }
+    end
+  end
+
+  def last_session # rubocop:disable Metrics/MethodLength
+    user = User.find_by(slug: params[:user_id])
+    return head(:not_found) unless user
+
+    session =
+      user
+      .workout_sessions
+      .where(
+        date: ...Time.zone.today,
+        muscle_group: params[:muscle_group]
+      ).order(date: :desc)
+      .first
+    respond_to do |format|
+      format.json { render json: session }
+    end
+  end
+
+  def last_exercise # rubocop:disable Metrics/MethodLength
+    user = User.find_by(slug: params[:user_id])
+    return head(:not_found) unless user
+
+    exercise =
+      ::Workouts::Exercise
+      .includes(session: [:user])
+      .where(
+        session: {
+          user: user,
+          date: ...Time.zone.today
+        }
+      ).order(date: :desc)
+      .first
+    respond_to do |format|
+      format.json { render json: exercise }
     end
   end
 
