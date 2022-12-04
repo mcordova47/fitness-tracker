@@ -90,7 +90,7 @@ lastSession userId muscleGroup = do
 lastExercise :: String -> String -> Aff (Maybe Exercise)
 lastExercise userId kind = do
   raw <- Affjax.get json $ "/" <> userId <> "/workouts/last_exercise" <> "?kind=" <> kind
-  pure $ hush raw <#> \{ body } -> unsafeCoerce body :: Exercise -- TODO: Use argonaut instead of `unsafeCoerce`
+  pure $ hush raw >>= \{ body } -> Nullable.toMaybe (unsafeCoerce body :: Nullable Exercise) -- TODO: Use argonaut instead of `unsafeCoerce`
 
 createSession :: { userId :: String, muscleGroup :: String } -> Aff (Maybe Session)
 createSession { userId, muscleGroup } = do

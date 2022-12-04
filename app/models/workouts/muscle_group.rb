@@ -7,11 +7,9 @@ module Workouts
 
     has_many :sessions
 
-    def as_json(*)
-      {
-        id: id,
-        name: name
-      }
-    end
+    def as_json(*) = {
+      id: id,
+      name: name
+    }
   end
 end

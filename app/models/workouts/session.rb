@@ -8,13 +8,11 @@ module Workouts
 
     has_many :exercises
 
-    def as_json(*)
-      {
-        id: id,
-        date: date,
-        muscleGroup: muscle_group,
-        exercises: exercises
-      }
-    end
+    def as_json(*) = {
+      id: id,
+      date: date,
+      muscleGroup: muscle_group,
+      exercises: exercises
+    }
   end
 end

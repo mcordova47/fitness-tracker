@@ -8,12 +8,10 @@ module Workouts
 
     has_many :sets
 
-    def as_json(*)
-      {
-        id: id,
-        kind: exercise_kind.kind,
-        sets: sets.order(:created_at)
-      }
-    end
+    def as_json(*) = {
+      id: id,
+      kind: exercise_kind.kind,
+      sets: sets.order(:created_at)
+    }
   end
 end

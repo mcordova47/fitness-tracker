@@ -1,5 +1,6 @@
 module Layout
   ( bootPage
+  , bootPage'
   )
   where
 
@@ -11,13 +12,16 @@ import Layout.Nav as Nav
 import Utils.Boot (bootPure)
 
 bootPage :: ∀ r. (Nav.Props r -> ReactElement) -> BootRecord (Nav.Props r)
-bootPage body = bootPure \props@{ activePage, userId } ->
-  view { activePage, userId } $
-    body props
+bootPage body =
+  bootPage' \props -> { nav: Nav.view props, body: body props }
 
-view :: ∀ r. Nav.Props r -> ReactElement -> ReactElement
-view navProps body =
+bootPage' :: ∀ props. (props -> { body :: ReactElement, nav :: ReactElement }) -> BootRecord props
+bootPage' f =
+  bootPure (view <<< f)
+
+view :: { body :: ReactElement, nav :: ReactElement } -> ReactElement
+view { body, nav } =
   H.div "pt-3 px-3 h-100 d-flex flex-column"
-  [ Nav.view navProps
+  [ nav
   , H.div "flex-grow-1" body
   ]

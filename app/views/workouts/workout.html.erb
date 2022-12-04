@@ -2,7 +2,7 @@
   elmish_component(
     "Workouts/WorkOut",
     props: {
-      activePage: "workout",
+      currentPath: request.path,
       exerciseKinds: @exercise_kinds,
       muscleGroups: @muscle_groups,
       userId: @user_id

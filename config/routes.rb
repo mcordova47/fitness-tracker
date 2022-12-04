@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  root to: 'main#landing'
+  namespace :main, path: '/' do
+    get 'workout'
+  end
+
   namespace :workouts, path: ':user_id/workouts' do
     get 'progress'
     get 'workout'

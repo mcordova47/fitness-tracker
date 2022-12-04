@@ -6,6 +6,7 @@
   , "argonaut-core"
   , "arrays"
   , "console"
+  , "debug"
   , "effect"
   , "either"
   , "elmish"

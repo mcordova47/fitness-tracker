@@ -8,7 +8,7 @@ import Layout as Layout
 import Pages.Progress as Progress
 
 type Props =
-  { activePage :: String
+  { currentPath :: String
   , userId :: String
   }
 

@@ -6,6 +6,8 @@ class WorkoutsController < ApplicationController # rubocop:disable Metrics/Class
     @user_id = params[:user_id]
     @user = User.find_by(slug: @user_id)
     next head(:not_found) unless @user
+
+    session[:user_id] = @user_id
   end
 
   def progress = nil

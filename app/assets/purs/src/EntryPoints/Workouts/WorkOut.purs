@@ -8,7 +8,7 @@ import Layout as Layout
 import Pages.WorkOut as WorkOut
 
 type Props =
-  { activePage :: String
+  { currentPath :: String
   , exerciseKinds :: Array { kind :: String }
   , muscleGroups :: Array { name :: String }
   , userId :: String
