@@ -25,6 +25,7 @@ import Elmish.Hooks as Hooks
 import Utils.Array (updateWhere)
 import Utils.Events (eventTargetValue)
 import Utils.Html ((&.>), (&>))
+import Utils.String (Plural(..), Singular(..), pluralize)
 
 type Props =
   { exerciseKinds :: Array ExerciseKind
@@ -73,11 +74,11 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         liftEffect $ setView $ ChooseMuscleGroup { modal: true }
 
   Hooks.pure $
-    case view' of
+    H.div "container py-4" case view' of
       Loading ->
         H.empty
       ChooseMuscleGroup { modal } ->
-        H.div "container pt-4"
+        H.fragment
         [ H.h3 "" "New session"
         , H.button_ "btn btn-link p-0"
             { onClick: setView $ ChooseMuscleGroup { modal: true } }
@@ -97,13 +98,13 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
               }
         ]
       AddExercises { session, modal } ->
-        H.div "container pt-4"
+        H.fragment
         [ H.h3 "" $ session.muscleGroup.name <> " day"
         , null session.exercises &>
             H.div "text-muted mb-1" "Add some exercises below to get started"
         , H.div "list-group"
           [ H.fragment $ session.exercises <#> \exercise ->
-              H.a_ "list-group-item"
+              H.a_ ("list-group-item" <> if null exercise.sets then "" else " text-success")
                 { href: "#"
                 , onClick: setView $ AddSets
                     { exerciseKind: { kind: exercise.kind }
@@ -111,7 +112,20 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                     , session
                     }
                 }
-                exercise.kind
+                [ not null exercise.sets &>
+                    H.text "✓ "
+                , if null exercise.sets then
+                    H.text exercise.kind
+                  else
+                    H.del "" exercise.kind
+                , not null exercise.sets &>
+                    H.fragment
+                    [ H.text " · "
+                    , H.text $ show $ Array.length exercise.sets
+                    , H.text " "
+                    , H.text $ pluralize (Array.length exercise.sets) (Singular "set") (Plural "sets")
+                    ]
+                ]
           , H.a_ "list-group-item"
               { href: "#"
               , onClick: setView $ AddExercises { session, modal: true }
@@ -132,7 +146,15 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
               ]
             , H.ul "list-group" $
                 exercises <#> \exercise ->
-                  H.li "list-group-item" exercise.kind
+                  H.li "list-group-item"
+                  [ H.text exercise.kind
+                  , H.span "text-muted"
+                    [ H.text " · "
+                    , H.text $ show $ Array.length exercise.sets
+                    , H.text " "
+                    , H.text $ pluralize (Array.length exercise.sets) (Singular "set") (Plural "sets")
+                    ]
+                  ]
             ]
         , modal &>
             modal'
@@ -184,7 +206,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         fetchLastExercise exerciseKind.kind setLastExercise
 
       Hooks.pure $
-        H.div "container pt-4"
+        H.fragment
         [ H.div ""
           [ H.a_ ""
               { href: "#"
