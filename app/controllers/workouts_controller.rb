@@ -122,7 +122,7 @@ class WorkoutsController < ApplicationController # rubocop:disable Metrics/Class
 
   def delete_exercise
     exercise = ::Workouts::Exercise.find(params[:exercise_id])
-    return head(:not_found) unless exercise&.session&.user.slug == @user_id
+    return head(:not_found) unless exercise&.session&.user&.slug == @user_id
 
     exercise.delete
     respond_to do |format|
