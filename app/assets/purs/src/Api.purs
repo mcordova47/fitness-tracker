@@ -5,6 +5,7 @@ module Api
   , Session'
   , Set
   , addSet
+  , copySessionToToday
   , createExercise
   , createSession
   , lastExercise
@@ -38,7 +39,8 @@ import Unsafe.Coerce (unsafeCoerce)
 type Session = Session' JSDate
 type SessionRaw = Session' String
 type Session' date =
-  { date :: date
+  { id :: Int
+  , date :: date
   , muscleGroup :: MuscleGroup
   , exercises :: Array Exercise
   }
@@ -135,5 +137,18 @@ updateSet { id, reps, userId, weight } = do
       , authenticity_token: Json.fromString token
       }
   pure $ hush raw <#> \{ body } -> unsafeCoerce body :: Exercise -- TODO: Use argonaut instead of `unsafeCoerce`
+
+copySessionToToday :: { userId :: String, sessionId :: Int } -> Aff (Maybe Session)
+copySessionToToday { userId, sessionId } = do
+  token <- liftEffect authenticityToken
+  raw <- Affjax.post json ("/" <> userId <> "/workouts/copy_exercises_to_today") $
+    Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
+      { session_id: Json.fromNumber $ Int.toNumber sessionId
+      , authenticity_token: Json.fromString token
+      }
+  for (hush raw) \{ body } -> do
+    let session = unsafeCoerce body :: SessionRaw -- TODO: Use argonaut instead of `unsafeCoerce`
+    date <- liftEffect $ JSDate.parse session.date
+    pure session { date = date }
 
 foreign import authenticityToken :: Effect String

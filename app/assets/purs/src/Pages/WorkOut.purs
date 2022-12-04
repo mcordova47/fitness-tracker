@@ -10,7 +10,7 @@ import Api as Api
 import Components.ReactSelect.CreatableSelect (creatableSelect)
 import Data.Array (find, null)
 import Data.Array as Array
-import Data.Foldable (for_)
+import Data.Foldable (for_, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Nullable as Nullable
@@ -118,9 +118,18 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
               }
               "+ Add an exercise"
           ]
-        , lastSession &.> \{ exercises } ->
+        , lastSession &.> \{ id, exercises } ->
             H.fragment
-            [ H.h5 "mt-5" "Here’s what you did last time"
+            [ H.h5 "mt-5"
+              [ H.text "Here’s what you did last time "
+              , null session.exercises &>
+                  H.button_ "btn btn-link p-0"
+                    { onClick: launchAff_ do
+                        Api.copySessionToToday { sessionId: id, userId } >>= traverse_ \session' ->
+                          liftEffect $ setView $ AddExercises { session: session', modal: false }
+                    }
+                    "(Copy to today’s session)"
+              ]
             , H.ul "list-group" $
                 exercises <#> \exercise ->
                   H.li "list-group-item" exercise.kind

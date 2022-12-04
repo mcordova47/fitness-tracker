@@ -12,5 +12,6 @@ Rails.application.routes.draw do
     post 'create_exercise'
     post 'add_set'
     post 'update_set'
+    post 'copy_exercises_to_today'
   end
 end

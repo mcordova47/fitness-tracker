@@ -2,45 +2,35 @@
 
 # The controller for the workouts API
 class WorkoutsController < ApplicationController
-  before_action only: %i[progress workout] do
+  before_action do
     @user_id = params[:user_id]
+    @user = User.find_by(slug: @user_id)
+    next head(:not_found) unless @user
   end
 
   def progress = nil
 
   def workout
-    user = User.find_by(slug: @user_id)
-    return head(:not_found) unless user
-
-    @muscle_groups = user.muscle_groups.order(:name)
-    @exercise_kinds = user.exercise_kinds.order(:kind)
+    @muscle_groups = @user.muscle_groups.order(:name)
+    @exercise_kinds = @user.exercise_kinds.order(:kind)
   end
 
   def sessions
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
     respond_to do |format|
-      format.json { render json: user.workout_sessions.order(:date) }
+      format.json { render json: @user.workout_sessions.order(:date) }
     end
   end
 
   def todays_session
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
-    session = user.workout_sessions.find_by(date: Time.zone.today)
+    session = @user.workout_sessions.find_by(date: Time.zone.today)
     respond_to do |format|
       format.json { render json: session }
     end
   end
 
   def last_session # rubocop:disable Metrics/MethodLength
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
     session =
-      user
+      @user
       .workout_sessions
       .where(
         date: ...Time.zone.today,
@@ -53,17 +43,15 @@ class WorkoutsController < ApplicationController
   end
 
   def last_exercise # rubocop:disable Metrics/MethodLength
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
     exercise =
       ::Workouts::Exercise
-      .includes(session: [:user])
+      .includes(:exercise_kind, session: [:user])
       .where(
         session: {
-          user: user,
+          user: @user,
           date: ...Time.zone.today
-        }
+        },
+        exercise_kind: { kind: params[:kind] }
       ).order(date: :desc)
       .first
     respond_to do |format|
@@ -72,23 +60,17 @@ class WorkoutsController < ApplicationController
   end
 
   def create_session
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
-    muscle_group = user.muscle_groups.find_or_create_by!(name: params[:muscle_group])
-    session = user.workout_sessions.create!(date: Time.zone.today, muscle_group: muscle_group)
+    muscle_group = @user.muscle_groups.find_or_create_by!(name: params[:muscle_group])
+    session = @user.workout_sessions.create!(date: Time.zone.today, muscle_group: muscle_group)
     respond_to do |format|
       format.json { render json: session }
     end
   end
 
-  def create_exercise # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
-    exercise_kind = user.exercise_kinds.find_or_create_by!(kind: params[:exercise_kind])
+  def create_exercise
+    exercise_kind = @user.exercise_kinds.find_or_create_by!(kind: params[:exercise_kind])
     exercise =
-      user
+      @user
       .workout_sessions
       .find_by(date: Time.zone.today)
       .exercises
@@ -99,12 +81,9 @@ class WorkoutsController < ApplicationController
     end
   end
 
-  def add_set # rubocop:disable Metrics/AbcSize
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
+  def add_set
     exercise = ::Workouts::Exercise.find(params[:exercise_id])
-    return head(:not_found) unless exercise.session.user == user
+    return head(:not_found) unless exercise.session.user == @user
 
     set = exercise.sets.create!(reps: params[:reps], weight: params[:weight])
 
@@ -113,17 +92,31 @@ class WorkoutsController < ApplicationController
     end
   end
 
-  def update_set # rubocop:disable Metrics/AbcSize
-    user = User.find_by(slug: params[:user_id])
-    return head(:not_found) unless user
-
+  def update_set
     set = ::Workouts::Set.find(params[:id])
-    return head(:not_found) unless set.exercise.session.user == user
+    return head(:not_found) unless set.exercise.session.user == @user
 
     set.update!(reps: params[:reps], weight: params[:weight])
 
     respond_to do |format|
       format.json { render json: set.exercise }
+    end
+  end
+
+  def copy_exercises_to_today # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    from_session = @user.workout_sessions.find(params[:session_id])
+    return head(:not_found) unless from_session
+
+    to_session = @user.workout_sessions.find_by(date: Time.zone.today)
+    return head(:not_found) unless to_session
+    return head(:not_found) if to_session.exercises.exists?
+
+    from_session.exercises.each do |exercise|
+      to_session.exercises.create!(exercise_kind: exercise.exercise_kind)
+    end
+
+    respond_to do |format|
+      format.json { render json: to_session }
     end
   end
 end
