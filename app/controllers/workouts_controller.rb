@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # The controller for the workouts API
-class WorkoutsController < ApplicationController
+class WorkoutsController < ApplicationController # rubocop:disable Metrics/ClassLength
   before_action do
     @user_id = params[:user_id]
     @user = User.find_by(slug: @user_id)
@@ -117,6 +117,16 @@ class WorkoutsController < ApplicationController
 
     respond_to do |format|
       format.json { render json: to_session }
+    end
+  end
+
+  def delete_exercise
+    exercise = ::Workouts::Exercise.find(params[:exercise_id])
+    return head(:not_found) unless exercise&.session&.user.slug == @user_id
+
+    exercise.delete
+    respond_to do |format|
+      format.json { render json: nil }
     end
   end
 end

@@ -8,6 +8,7 @@ module Api
   , copySessionToToday
   , createExercise
   , createSession
+  , deleteExercise
   , lastExercise
   , lastSession
   , sessions
@@ -150,5 +151,15 @@ copySessionToToday { userId, sessionId } = do
     let session = unsafeCoerce body :: SessionRaw -- TODO: Use argonaut instead of `unsafeCoerce`
     date <- liftEffect $ JSDate.parse session.date
     pure session { date = date }
+
+deleteExercise :: { userId :: String, exerciseId :: Int } -> Aff Unit
+deleteExercise { userId, exerciseId } = do
+  token <- liftEffect authenticityToken
+  _ <- Affjax.post json ("/" <> userId <> "/workouts/delete_exercise") $
+    Just $ RequestBody.json $ Json.fromObject $ FO.fromHomogeneous
+      { exercise_id: Json.fromNumber $ Int.toNumber exerciseId
+      , authenticity_token: Json.fromString token
+      }
+  pure unit
 
 foreign import authenticityToken :: Effect String

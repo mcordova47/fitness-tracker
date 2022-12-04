@@ -13,3 +13,7 @@
  *= require_tree .
  *= require_self
  */
+
+.group:hover .group-hover\:d-block {
+  display: block !important;
+}

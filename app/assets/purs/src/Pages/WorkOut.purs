@@ -22,10 +22,12 @@ import Effect.Class (liftEffect)
 import Elmish (EffectFn1, ReactElement, mkEffectFn1, (<?|))
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
+import Unsafe.Coerce (unsafeCoerce)
 import Utils.Array (updateWhere)
 import Utils.Events (eventTargetValue)
 import Utils.Html ((&.>), (&>))
 import Utils.String (Plural(..), Singular(..), pluralize)
+import Web.Event.Event (stopPropagation)
 
 type Props =
   { exerciseKinds :: Array ExerciseKind
@@ -103,8 +105,8 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         , null session.exercises &>
             H.div "text-muted mb-1" "Add some exercises below to get started"
         , H.div "list-group"
-          [ H.fragment $ session.exercises <#> \exercise ->
-              H.a_ ("list-group-item" <> if null exercise.sets then "" else " text-success")
+          [ H.fragment $ session.exercises # Array.mapWithIndex \index exercise ->
+              H.a_ ("list-group-item d-flex justify-content-between align-items-center group" <> if null exercise.sets then "" else " text-success")
                 { href: "#"
                 , onClick: setView $ AddSets
                     { exerciseKind: { kind: exercise.kind }
@@ -112,19 +114,38 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                     , session
                     }
                 }
-                [ not null exercise.sets &>
-                    H.text "✓ "
-                , if null exercise.sets then
-                    H.text exercise.kind
-                  else
-                    H.del "" exercise.kind
-                , not null exercise.sets &>
-                    H.fragment
-                    [ H.text " · "
-                    , H.text $ show $ Array.length exercise.sets
-                    , H.text " "
-                    , H.text $ pluralize (Array.length exercise.sets) (Singular "set") (Plural "sets")
-                    ]
+                [ H.div ""
+                  [ not null exercise.sets &>
+                      H.text "✓ "
+                  , if null exercise.sets then
+                      H.text exercise.kind
+                    else
+                      H.del "" exercise.kind
+                  , not null exercise.sets &>
+                      H.fragment
+                      [ H.text " · "
+                      , H.text $ show $ Array.length exercise.sets
+                      , H.text " "
+                      , H.text $ pluralize (Array.length exercise.sets) (Singular "set") (Plural "sets")
+                      ]
+                  ]
+                , H.div "d-md-none group-hover:d-block" $
+                    H.button_ "btn-sm btn-close p-0"
+                      { onClick: unsafeCoerce $ mkEffectFn1 \e -> do
+                          stopPropagation e
+                          launchAff_ $
+                            Api.deleteExercise { userId, exerciseId: exercise.id }
+                          setView $ AddExercises
+                            { session: session
+                                { exercises =
+                                    session.exercises
+                                      # Array.deleteAt index
+                                      # fromMaybe session.exercises
+                                }
+                            , modal: false
+                            }
+                      }
+                      H.empty
                 ]
           , H.a_ "list-group-item"
               { href: "#"
