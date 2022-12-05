@@ -116,10 +116,11 @@ class PursProcessor
     tries = 0
     begin
       sh 'npx', 'spago', 'build', '--no-psa'
-    rescue StandardError
+    rescue StandardError => e
       tries += 1
-      Rails.logger.log("Attempt #{tries} to run spago build failed")
       retry if tries < 3
+
+      raise e
     end
   end
 end
