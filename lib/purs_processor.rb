@@ -47,7 +47,7 @@ class PursProcessor
   end
 
   def self.esbuild_bundle(module_path) # rubocop:disable Metrics/MethodLength
-    sh 'npx', 'spago', 'build', '--no-psa'
+    spago_build
 
     module_name = file_path_to_module_name module_path
     entry_point_file = "output/#{module_name}/index.js"
@@ -110,6 +110,17 @@ class PursProcessor
     return if status.success?
 
     raise PursCompileError, "PureScript support: '#{cmd.join(' ')}' returned code #{$CHILD_STATUS}.\n#{stderr}"
+  end
+
+  def self.spago_build
+    tries = 0
+    begin
+      sh 'npx', 'spago', 'build', '--no-psa'
+    rescue StandardError
+      tries += 1
+      Rails.logger.log("Attempt #{tries} to run spago build failed")
+      retry if tries < 3
+    end
   end
 end
 
