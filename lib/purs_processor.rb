@@ -47,6 +47,7 @@ class PursProcessor
   end
 
   def self.esbuild_bundle(module_path) # rubocop:disable Metrics/MethodLength
+    Rails.logger.info Dir.entries("#{PursProcessor.absolute_purs_root}/.spago")
     sh 'npx', 'spago', 'build', '--no-psa'
 
     module_name = file_path_to_module_name module_path
