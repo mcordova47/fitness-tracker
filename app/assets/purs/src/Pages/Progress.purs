@@ -26,6 +26,7 @@ import Effect.Class (liftEffect)
 import Elmish (ReactElement)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
+import Utils.Assets (assetPath)
 
 type Props =
   { userId :: String
@@ -41,26 +42,45 @@ view props = Hooks.component Hooks.do
     for_ sessions \s ->
       liftEffect $ setExerciseHistory $ Just $ exerciseHistory s
 
-  Hooks.pure $ H.fragment
-    [ H.div "row mt-3" $
+  Hooks.pure $
+    H.div "container-fluid mt-3"
+    [ H.div "row" $
         case exerciseHistory' of
-          Just history -> H.fragment $
-            history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
-              H.div "col-12 col-md-6 col-lg-4" $
-                H.div "card lift mb-3" $
-                  H.div "card-body"
-                  [ H.h6_ "card-title text-uppercase text-secondary"
-                      { onClick: setModal $ Just kind, role: "button" }
-                      kind
-                  , responsiveContainer { height: pixels 300.0 } $
-                      lineChart { data: setHistories } $
-                        maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 <#> \index ->
-                          line
-                            { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
-                            , type: monotone
-                            , stroke: color index
-                            }
-                  ]
+          Just history
+            | Map.isEmpty history ->
+              H.div "col text-center"
+              [ H.h3 "" "Looks like there’s nothing here, yet"
+              , H.p "text-muted" "Track your first workout to get started"
+              , H.div_ "mx-auto"
+                  { style: H.css
+                      { background: "url(" <> assetPath "/empty-gym.png" <> ")"
+                      , backgroundSize: "cover"
+                      , height: 400
+                      , maxHeight: "100%"
+                      , width: 400
+                      , maxWidth: "100%"
+                      , boxShadow: "inset 0 0 150px white"
+                      }
+                  }
+                  H.empty
+              ]
+            | otherwise -> H.fragment $
+              history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
+                H.div "col-12 col-md-6 col-lg-4" $
+                  H.div "card lift mb-3" $
+                    H.div "card-body"
+                    [ H.h6_ "card-title text-uppercase text-secondary"
+                        { onClick: setModal $ Just kind, role: "button" }
+                        kind
+                    , responsiveContainer { height: pixels 300.0 } $
+                        lineChart { data: setHistories } $
+                          maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 <#> \index ->
+                            line
+                              { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
+                              , type: monotone
+                              , stroke: color index
+                              }
+                    ]
           Nothing ->
             H.div "position-absolute top-0 bottom-0 start-0 end-0 d-flex justify-content-center align-items-center" $
               H.div "spinner-grow spinner-grow-xl text-white display-4"
