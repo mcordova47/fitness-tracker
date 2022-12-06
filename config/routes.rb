@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     get 'todays_session'
     get 'last_session'
     get 'last_exercise'
+    get 'max_set'
     post 'create_session'
     post 'create_exercise'
     post 'add_set'

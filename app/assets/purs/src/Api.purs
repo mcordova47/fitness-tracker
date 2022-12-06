@@ -6,6 +6,7 @@ module Api
   , deleteExercise
   , lastExercise
   , lastSession
+  , maxSet
   , sessions
   , todaysSession
   , updateSet
@@ -32,6 +33,7 @@ import Foreign.Object as FO
 import Types.Workouts.Exercise (Exercise)
 import Types.Workouts.MuscleGroup (MuscleGroup)
 import Types.Workouts.Session (Session, SessionRaw)
+import Types.Workouts.Set (Set)
 import Unsafe.Coerce (unsafeCoerce)
 
 sessions :: String -> Aff (Maybe (Array Session))
@@ -62,6 +64,11 @@ lastExercise :: String -> String -> Aff (Maybe Exercise)
 lastExercise userId kind = do
   raw <- Affjax.get json $ "/" <> userId <> "/workouts/last_exercise" <> "?kind=" <> kind
   pure $ hush raw >>= \{ body } -> Nullable.toMaybe (unsafeCoerce body :: Nullable Exercise) -- TODO: Use argonaut instead of `unsafeCoerce`
+
+maxSet :: String -> String -> Aff (Maybe Set)
+maxSet userId kind = do
+  raw <- Affjax.get json $ "/" <> userId <> "/workouts/max_set" <> "?kind=" <> kind
+  pure $ hush raw >>= \{ body } -> Nullable.toMaybe (unsafeCoerce body :: Nullable Set) -- TODO: Use argonaut instead of `unsafeCoerce`
 
 createSession :: { userId :: String, muscleGroup :: String } -> Aff (Maybe Session)
 createSession { userId, muscleGroup } = do

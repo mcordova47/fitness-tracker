@@ -7,11 +7,11 @@ import Prelude
 
 import Api as Api
 import Components.ReactSelect.CreatableSelect (creatableSelect)
-import Data.Array (find, null)
+import Data.Array (find, null, (!!))
 import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Int as Int
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
 import Data.Nullable as Nullable
 import Data.Number as Number
 import Data.Tuple.Nested ((/\))
@@ -27,7 +27,7 @@ import Types.Workouts.Session (Session)
 import Unsafe.Coerce (unsafeCoerce)
 import Utils.Array (updateWhere)
 import Utils.Events (eventTargetValue)
-import Utils.Html ((&.>), (&>))
+import Utils.Html (htmlIf, (&.>), (&>))
 import Utils.String (Plural(..), Singular(..), pluralize)
 import Web.Event.Event (stopPropagation)
 
@@ -202,6 +202,10 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
       Api.lastExercise userId kind
         >>= liftEffect <<< setLastExercise
 
+    fetchMaxSet kind setMaxSet =
+      Api.maxSet userId kind
+        >>= liftEffect <<< setMaxSet
+
     createSession :: ∀ opt. (View -> Effect Unit) -> (Maybe Session -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
     createSession setView setLastSession toValue = mkEffectFn1 \mg -> launchAff_ do
       mSession <- Api.createSession { muscleGroup: toValue mg, userId }
@@ -222,9 +226,11 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
 
     addSetsView s@{ exerciseKind, session } setView = Hooks.component Hooks.do
       lastExercise /\ setLastExercise <- Hooks.useState Nothing
+      maxSet /\ setMaxSet <- Hooks.useState Nothing
 
-      Hooks.useEffect $
+      Hooks.useEffect do
         fetchLastExercise exerciseKind.kind setLastExercise
+        fetchMaxSet exerciseKind.kind setMaxSet
 
       Hooks.pure $
         H.fragment
@@ -262,23 +268,43 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                     ]
                   ]
                 ]
-              , lastExercise &.> \ex ->
-                  H.fragment
-                  [ H.h5 "mt-5" "Here’s what you did last time"
-                  , H.table "table"
-                    [ H.thead "" $
-                        H.tr ""
-                        [ H.th_ "" { scope: "col" } "Weight"
-                        , H.th_ "" { scope: "col" } "Reps"
-                        ]
-                    , H.tbody "" $
-                        ex.sets <#> \set ->
-                          H.tr ""
-                          [ H.th_ "" { scope: "row" } $ show set.weight
-                          , H.td "" $ show set.reps
+              , H.div "row mt-5"
+                [ lastExercise &.> \ex ->
+                    H.div "col-12 col-md-8" $
+                      H.div "card mb-3" $
+                        H.div "card-body"
+                        [ H.h5 "" "Here’s what you did last time"
+                        , H.table "table"
+                          [ H.thead "" $
+                              H.tr ""
+                              [ H.th_ "" { scope: "col" } "Weight"
+                              , H.th_ "" { scope: "col" } "Reps"
+                              ]
+                          , H.tbody "" $
+                              ex.sets <#> \set ->
+                                H.tr ""
+                                [ H.th_ "" { scope: "row" } $ show set.weight
+                                , H.td "" $ show set.reps
+                                ]
                           ]
-                    ]
-                  ]
+                        ]
+                , maxSet &.> \{ weight, reps } ->
+                    H.div "col-12 col-md-4" $
+                      H.div "card mb-3" $
+                        H.div "card-body"
+                        [ H.h5 "" "All-time max"
+                        , H.div "row mt-3"
+                          [ H.div "col-12 col-lg-6"
+                            [ H.h6 "text-muted" "Weight"
+                            , H.div "display-4" $ show weight
+                            ]
+                          , H.div "col-12 col-lg-6"
+                            [ H.h6 "text-muted" "Reps"
+                            , H.div "display-4" $ show reps
+                            ]
+                          ]
+                        ]
+                ]
               , addSetModal s exercise setView
               ]
         ]
@@ -287,7 +313,9 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
       fromMaybe H.empty do
         editSetModal <- modal
         pure $ Hooks.component Hooks.do
-          let mSet = exercise.sets # Array.find (eq editSetModal <<< ExistingSet <<< _.id)
+          let
+            setIndex = exercise.sets # Array.findIndex (eq editSetModal <<< ExistingSet <<< _.id) # fromMaybe (Array.length exercise.sets)
+            mSet = exercise.sets !! setIndex
           weight /\ setWeight <- Hooks.useState $ maybe "" (show <<< _.weight) mSet
           reps /\ setReps <- Hooks.useState $ maybe "" (show <<< _.reps) mSet
           Hooks.pure $ modal'
@@ -319,7 +347,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                         , value: reps
                         }
                   ]
-                , H.button_ "btn btn-primary px-4 mt-3"
+                , H.button_ "btn btn-primary px-4 mt-3 me-3"
                     { onClick: fromMaybe (pure unit) do
                         weight' <- Number.fromString weight
                         reps' <- Int.fromString reps
@@ -329,21 +357,50 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                               NewSet ->
                                 Api.addSet { exerciseId: exercise.id, reps: reps', userId, weight: weight' }
                               ExistingSet id ->
-                                Api.updateSet { id, reps: reps', userId, weight: weight' } -- TODO: Update exiting Set
+                                Api.updateSet { id, reps: reps', userId, weight: weight' }
                           for_ mExercise \exercise' ->
-                            liftEffect $ setView $ AddSets
-                              { exerciseKind
-                              , modal: Nothing
-                              , session: session
-                                  { exercises = session.exercises #
-                                      updateWhere (eq exerciseKind.kind <<< _.kind) exercise'
-                                  }
-                              }
+                            liftEffect do
+                              setWeight ""
+                              setReps ""
+                              setView $ AddSets
+                                { exerciseKind
+                                , modal: case mSet of
+                                    Just _ -> Nothing
+                                    Nothing -> Just NewSet
+                                , session: session
+                                    { exercises = session.exercises #
+                                        updateWhere (eq exerciseKind.kind <<< _.kind) exercise'
+                                    }
+                                }
                     }
-                    "Save"
+                    case mSet of
+                      Just _ -> "Save"
+                      Nothing -> "Next set →"
+                , htmlIf (isNothing mSet) $
+                    H.button_ "btn btn-outline-primary px-4 mt-3"
+                      { onClick: fromMaybe (pure unit) do
+                          weight' <- Number.fromString weight
+                          reps' <- Int.fromString reps
+                          pure $ launchAff_ do
+                            mExercise <-
+                              case editSetModal of
+                                NewSet ->
+                                  Api.addSet { exerciseId: exercise.id, reps: reps', userId, weight: weight' }
+                                ExistingSet id ->
+                                  Api.updateSet { id, reps: reps', userId, weight: weight' }
+                            for_ mExercise \exercise' ->
+                              liftEffect $ setView $ AddExercises
+                                { session: session
+                                    { exercises = session.exercises #
+                                        updateWhere (eq exerciseKind.kind <<< _.kind) exercise'
+                                    }
+                                , modal: false
+                                }
+                      }
+                      "Done"
                 ]
             , onDismiss: setView $ AddSets { exerciseKind, modal: Nothing, session }
-            , title: "How’d it go?"
+            , title: "How’d set " <> show (setIndex + 1) <> " go?"
             }
 
     modal' { content, onDismiss, title } =

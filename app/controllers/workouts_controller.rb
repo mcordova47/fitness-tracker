@@ -44,6 +44,22 @@ class WorkoutsController < ApplicationController # rubocop:disable Metrics/Class
     end
   end
 
+  def max_set # rubocop:disable Metrics/MethodLength
+    set =
+      ::Workouts::Set
+      .joins(exercise: %i[session exercise_kind])
+      .where(
+        workouts_exercises: {
+          workouts_sessions: { user_id: @user.id },
+          workouts_exercise_kinds: { kind: params[:kind] }
+        }
+      ).order(weight: :desc)
+      .first
+    respond_to do |format|
+      format.json { render json: set }
+    end
+  end
+
   def last_exercise # rubocop:disable Metrics/MethodLength
     exercise =
       ::Workouts::Exercise
