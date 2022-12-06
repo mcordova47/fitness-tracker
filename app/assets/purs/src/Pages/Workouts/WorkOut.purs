@@ -1,4 +1,4 @@
-module Pages.WorkOut
+module Pages.Workouts.WorkOut
   ( view
   )
   where
@@ -53,7 +53,6 @@ type AddExercisesState =
 type AddSetsState =
   { exerciseKind :: ExerciseKind
   , modal :: Maybe SetModal
-  -- ^ Index of the Set which is opened
   , session :: Session
   }
 

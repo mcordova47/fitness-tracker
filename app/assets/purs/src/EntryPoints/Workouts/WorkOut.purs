@@ -5,7 +5,7 @@ module EntryPoints.Workouts.WorkOut
 
 import Elmish.Boot (BootRecord)
 import Layout as Layout
-import Pages.WorkOut as WorkOut
+import Pages.Workouts.WorkOut as WorkOut
 
 type Props =
   { currentPath :: String

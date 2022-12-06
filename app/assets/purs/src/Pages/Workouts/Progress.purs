@@ -1,4 +1,4 @@
-module Pages.Progress
+module Pages.Workouts.Progress
   ( view
   )
   where

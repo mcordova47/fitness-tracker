@@ -5,7 +5,7 @@ module EntryPoints.Workouts.Progress
 
 import Elmish.Boot (BootRecord)
 import Layout as Layout
-import Pages.Progress as Progress
+import Pages.Workouts.Progress as Progress
 
 type Props =
   { currentPath :: String
