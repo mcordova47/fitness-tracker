@@ -5,7 +5,6 @@ module Pages.Workouts.WorkOut
 
 import Prelude
 
-import Api (Session)
 import Api as Api
 import Components.ReactSelect.CreatableSelect (creatableSelect)
 import Data.Array (find, null)
@@ -22,6 +21,9 @@ import Effect.Class (liftEffect)
 import Elmish (EffectFn1, ReactElement, mkEffectFn1, (<?|))
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
+import Types.Workouts.ExerciseKind (ExerciseKind)
+import Types.Workouts.MuscleGroup (MuscleGroup)
+import Types.Workouts.Session (Session)
 import Unsafe.Coerce (unsafeCoerce)
 import Utils.Array (updateWhere)
 import Utils.Events (eventTargetValue)
@@ -40,10 +42,6 @@ data View
   | ChooseMuscleGroup { modal :: Boolean }
   | AddExercises AddExercisesState
   | AddSets AddSetsState
-
-type ExerciseKind = { kind :: String }
-
-type MuscleGroup = { name :: String }
 
 type AddExercisesState =
   { modal :: Boolean
@@ -81,9 +79,12 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
       ChooseMuscleGroup { modal } ->
         H.fragment
         [ H.h3 "" "New session"
-        , H.button_ "btn btn-link p-0"
-            { onClick: setView $ ChooseMuscleGroup { modal: true } }
-            "Choose a muscle group to begin"
+        , H.p "text-muted"
+          [ H.button_ "btn btn-link p-0"
+              { onClick: setView $ ChooseMuscleGroup { modal: true } }
+              "Choose a muscle group"
+          , H.text " to begin."
+          ]
         , modal &>
             modal'
               { content:

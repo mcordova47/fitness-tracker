@@ -15,7 +15,8 @@ import Components.Recharts.Types.DataKey (dataKeyFunction, dataKeyString)
 import Components.Recharts.XAxis (tickFormatter, xAxis)
 import Components.Recharts.YAxis (yAxis)
 import Data.Array (foldl, length, mapWithIndex, range, (!!))
-import Data.Foldable (for_, maximum)
+import Data.Array as Array
+import Data.Foldable (maximum)
 import Data.JSDate (JSDate)
 import Data.JSDate as JSDate
 import Data.Map (Map)
@@ -26,7 +27,9 @@ import Effect.Class (liftEffect)
 import Elmish (ReactElement)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
+import Types.Workouts.Session (Session)
 import Utils.Assets (assetPath)
+import Utils.Html (htmlIf, (&.>))
 
 type Props =
   { userId :: String
@@ -34,13 +37,29 @@ type Props =
 
 view :: Props -> ReactElement
 view props = Hooks.component Hooks.do
+  sessions /\ setSessions <- Hooks.useState Nothing
   exerciseHistory' /\ setExerciseHistory <- Hooks.useState Nothing
   modal /\ setModal <- Hooks.useState Nothing
+  muscleGroup /\ setMuscleGroup <- Hooks.useState Nothing
 
   Hooks.useEffect do
-    sessions <- Api.sessions props.userId
-    for_ sessions \s ->
-      liftEffect $ setExerciseHistory $ Just $ exerciseHistory s
+    s <- Api.sessions props.userId
+    liftEffect do
+      setSessions s
+      setExerciseHistory (exerciseHistory <$> s)
+
+  let
+    exerciseKindsForMuscleGroup mg =
+      sessions
+        # fromMaybe []
+        # Array.filter (eq mg <<< _.muscleGroup.id)
+        >>= _.exercises
+        <#> _.kind
+    filterByMuscleGroup = setExerciseHistory <<< case _ of
+      Just mg -> Map.filterKeys (_ `Array.elem` exerciseKindsForMuscleGroup mg) <<< exerciseHistory <$> sessions
+      Nothing -> exerciseHistory <$> sessions
+
+  Hooks.useEffect' muscleGroup (liftEffect <<< filterByMuscleGroup)
 
   Hooks.pure $
     H.div "container-fluid mt-3"
@@ -64,23 +83,44 @@ view props = Hooks.component Hooks.do
                   }
                   H.empty
               ]
-            | otherwise -> H.fragment $
-              history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
-                H.div "col-12 col-md-6 col-lg-4" $
-                  H.div "card lift mb-3" $
-                    H.div "card-body"
-                    [ H.h6_ "card-title text-uppercase text-secondary"
-                        { onClick: setModal $ Just kind, role: "button" }
-                        kind
-                    , responsiveContainer { height: pixels 300.0 } $
-                        lineChart { data: setHistories } $
-                          maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 <#> \index ->
-                            line
-                              { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
-                              , type: monotone
-                              , stroke: color index
-                              }
-                    ]
+            | otherwise -> H.fragment
+              [ sessions &.> \s ->
+                  s <#> _.muscleGroup # Array.nub # \muscleGroups ->
+                    htmlIf (Array.length muscleGroups > 1) $
+                      H.div "col-12"
+                      [ H.strong "d-none d-md-inline me-2" "Filter by:"
+                      , H.div "d-inline-block" $
+                          H.ul "nav nav-pills mb-3" $
+                            muscleGroups <#> \{ id, name } ->
+                              H.li "nav-item" $
+                                H.a_ ("nav-link" <> if muscleGroup == Just id then " active" else "")
+                                  { onClick: setMuscleGroup
+                                      if muscleGroup == Just id then
+                                        Nothing
+                                      else
+                                        Just id
+                                  , href: "#"
+                                  }
+                                  name
+                      ]
+              , H.fragment $
+                  history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
+                    H.div "col-12 col-md-6 col-lg-4" $
+                      H.div "card lift mb-3" $
+                        H.div "card-body"
+                        [ H.h6_ "card-title text-uppercase text-secondary"
+                            { onClick: setModal $ Just kind, role: "button" }
+                            kind
+                        , responsiveContainer { height: pixels 300.0 } $
+                            lineChart { data: setHistories } $
+                              maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 <#> \index ->
+                                line
+                                  { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
+                                  , type: monotone
+                                  , stroke: color index
+                                  }
+                        ]
+              ]
           Nothing ->
             H.div "position-absolute top-0 bottom-0 start-0 end-0 d-flex justify-content-center align-items-center" $
               H.div "spinner-grow spinner-grow-xl text-white display-4"
@@ -123,7 +163,7 @@ view props = Hooks.component Hooks.do
           ]
     ]
 
-exerciseHistory :: Array Api.Session -> Map String (Array { date :: JSDate, weights :: Array Number })
+exerciseHistory :: Array Session -> Map String (Array { date :: JSDate, weights :: Array Number })
 exerciseHistory = foldl insertExerciseHistories Map.empty
   where
     insertExerciseHistories history session =

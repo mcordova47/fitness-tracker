@@ -1,10 +1,5 @@
 module Api
-  ( Exercise
-  , MuscleGroup
-  , Session
-  , Session'
-  , Set
-  , addSet
+  ( addSet
   , copySessionToToday
   , createExercise
   , createSession
@@ -25,7 +20,6 @@ import Affjax.Web as Affjax
 import Data.Argonaut.Core as Json
 import Data.Either (hush)
 import Data.Int as Int
-import Data.JSDate (JSDate)
 import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
@@ -35,33 +29,10 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign.Object as FO
+import Types.Workouts.Exercise (Exercise)
+import Types.Workouts.MuscleGroup (MuscleGroup)
+import Types.Workouts.Session (Session, SessionRaw)
 import Unsafe.Coerce (unsafeCoerce)
-
-type Session = Session' JSDate
-type SessionRaw = Session' String
-type Session' date =
-  { id :: Int
-  , date :: date
-  , muscleGroup :: MuscleGroup
-  , exercises :: Array Exercise
-  }
-
-type Exercise =
-  { id :: Int
-  , kind :: String
-  , sets :: Array Set
-  }
-
-type Set =
-  { id :: Int
-  , reps :: Int
-  , weight :: Number
-  }
-
-type MuscleGroup =
-  { id :: Int
-  , name :: String
-  }
 
 sessions :: String -> Aff (Maybe (Array Session))
 sessions userId = do

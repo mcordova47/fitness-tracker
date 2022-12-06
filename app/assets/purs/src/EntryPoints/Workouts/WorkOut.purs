@@ -6,11 +6,13 @@ module EntryPoints.Workouts.WorkOut
 import Elmish.Boot (BootRecord)
 import Layout as Layout
 import Pages.Workouts.WorkOut as WorkOut
+import Types.Workouts.ExerciseKind (ExerciseKind)
+import Types.Workouts.MuscleGroup (MuscleGroup)
 
 type Props =
   { currentPath :: String
-  , exerciseKinds :: Array { kind :: String }
-  , muscleGroups :: Array { name :: String }
+  , exerciseKinds :: Array ExerciseKind
+  , muscleGroups :: Array MuscleGroup
   , userId :: String
   }
 
