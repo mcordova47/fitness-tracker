@@ -18,8 +18,9 @@ class WorkoutsController < ApplicationController # rubocop:disable Metrics/Class
   end
 
   def sessions
+    sessions = @user.workout_sessions.includes(:muscle_group, exercises: %i[exercise_kind sets]).order(:date)
     respond_to do |format|
-      format.json { render json: @user.workout_sessions.order(:date) }
+      format.json { render json: sessions }
     end
   end
 

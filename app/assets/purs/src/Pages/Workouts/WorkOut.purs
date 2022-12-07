@@ -270,7 +270,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                 ]
               , H.div "row mt-5"
                 [ lastExercise &.> \ex ->
-                    H.div "col-12 col-md-8" $
+                    H.div "col-12 col-md-6 col-lg-8" $
                       H.div "card mb-3" $
                         H.div "card-body"
                         [ H.h5 "" "Here’s what you did last time"
@@ -289,16 +289,16 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                           ]
                         ]
                 , maxSet &.> \{ weight, reps } ->
-                    H.div "col-12 col-md-4" $
+                    H.div "col-12 col-md-6 col-lg-4" $
                       H.div "card mb-3" $
                         H.div "card-body"
                         [ H.h5 "" "All-time max"
                         , H.div "row mt-3"
-                          [ H.div "col-12 col-lg-6"
+                          [ H.div "col-6"
                             [ H.h6 "text-muted" "Weight"
                             , H.div "display-4" $ show weight
                             ]
-                          , H.div "col-12 col-lg-6"
+                          , H.div "col-6"
                             [ H.h6 "text-muted" "Reps"
                             , H.div "display-4" $ show reps
                             ]
