@@ -53,7 +53,9 @@ class WorkoutsController < ApplicationController # rubocop:disable Metrics/Class
           workouts_sessions: { user_id: @user.id },
           workouts_exercise_kinds: { kind: params[:kind] }
         }
-      ).order(weight: :desc, reps: :desc)
+      ).order(weight: :desc)
+      .order(reps: :desc)
+      .order(created_at: :desc)
       .first
     respond_to do |format|
       format.json { render json: set }

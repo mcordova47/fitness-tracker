@@ -9,14 +9,15 @@ import Api as Api
 import Components.Recharts.CartesianGrid (cartesianGrid)
 import Components.Recharts.Line (line, monotone)
 import Components.Recharts.LineChart (lineChart)
-import Components.Recharts.ResponsiveContainer (pixels, responsiveContainer)
+import Components.Recharts.ResponsiveContainer (percent, pixels, responsiveContainer)
 import Components.Recharts.Tooltip (tooltip)
 import Components.Recharts.Types.DataKey (dataKeyFunction, dataKeyString)
 import Components.Recharts.XAxis (tickFormatter, xAxis)
 import Components.Recharts.YAxis (yAxis)
 import Data.Array (foldl, length, mapWithIndex, range, (!!))
 import Data.Array as Array
-import Data.Foldable (maximum)
+import Data.Foldable (maximum, sum)
+import Data.Int as Int
 import Data.JSDate (JSDate)
 import Data.JSDate as JSDate
 import Data.Map (Map)
@@ -34,6 +35,11 @@ import Utils.Html (htmlIf, (&.>))
 type Props =
   { userId :: String
   }
+
+data ChartType
+  = Weight
+  | Volume
+derive instance Eq ChartType
 
 view :: Props -> ReactElement
 view props = Hooks.component Hooks.do
@@ -109,7 +115,7 @@ view props = Hooks.component Hooks.do
                       H.div "card lift mb-3" $
                         H.div "card-body"
                         [ H.h6_ "card-title text-uppercase text-secondary"
-                            { onClick: setModal $ Just kind, role: "button" }
+                            { onClick: setModal $ Just { exerciseKind: kind, chartType: Weight }, role: "button" }
                             kind
                         , responsiveContainer { height: pixels 300.0 } $
                             lineChart { data: setHistories } $
@@ -128,26 +134,42 @@ view props = Hooks.component Hooks.do
               , H.span "sr-only" "Loading…"
               ]
     , fromMaybe H.empty do
-        kind <- modal
+        { exerciseKind, chartType } <- modal
         history <- exerciseHistory'
-        setHistories <- Map.lookup kind history
+        setHistories <- Map.lookup exerciseKind history
         pure $ H.fragment
           [ H.div "modal fade show d-block" $
               H.div "modal-dialog modal-fullscreen" $
                 H.div "modal-content"
                 [ H.div "modal-header"
-                  [ H.h2 "modal-title" kind
+                  [ H.h2 "modal-title" exerciseKind
                   , H.button_ "btn-close" { onClick: setModal Nothing } H.empty
                   ]
-                , H.div "modal-body" $
-                    responsiveContainer {} $
+                , H.div "modal-body"
+                  [ H.div "d-flex justify-content-center mt-n2 mb-2"
+                    [ H.button_ ("btn btn-sm me-1 btn-" <> if chartType == Weight then "primary" else "outline-primary")
+                        { onClick: setModal $ Just { exerciseKind, chartType: Weight } }
+                        "Weight"
+                    , H.button_ ("btn btn-sm ms-1 btn-" <> if chartType == Volume then "primary" else "outline-primary")
+                        { onClick: setModal $ Just { exerciseKind, chartType: Volume } }
+                        "Volume"
+                    ]
+                  , responsiveContainer { height: percent 90.0 } $
                       lineChart { data: setHistories }
-                      [ H.fragment $
-                          maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 # mapWithIndex \index _ ->
+                      [ case chartType of
+                          Weight -> H.fragment $
+                            maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 # mapWithIndex \index _ ->
+                              line
+                                { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
+                                , name: "Set " <> show (index + 1) <> " Weight"
+                                , stroke: color index
+                                , strokeWidth: 2.0
+                                }
+                          Volume ->
                             line
-                              { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
-                              , name: "Set " <> show (index + 1) <> " Weight"
-                              , stroke: color index
+                              { dataKey: dataKeyString "volume"
+                              , name: "Volume"
+                              , stroke: defaultColor
                               , strokeWidth: 2.0
                               }
                       , xAxis
@@ -158,25 +180,35 @@ view props = Hooks.component Hooks.do
                       , cartesianGrid { strokeDasharray: "3 3" }
                       , tooltip {}
                       ]
+                  ]
                 ]
           , H.div "modal-backdrop fade show" H.empty
           ]
     ]
 
-exerciseHistory :: Array Session -> Map String (Array { date :: JSDate, weights :: Array Number })
+exerciseHistory :: Array Session -> Map String (Array { date :: JSDate, weights :: Array Number, volume :: Number })
 exerciseHistory = foldl insertExerciseHistories Map.empty
   where
     insertExerciseHistories history session =
       foldl (insertExerciseHistory session) history session.exercises
 
     insertExerciseHistory session history exercise =
-      Map.insertWith (<>) exercise.kind [{ date: session.date, weights: _.weight <$> exercise.sets }] history
+      Map.insertWith (<>)
+        exercise.kind
+        [ { date: session.date
+          , weights: _.weight <$> exercise.sets
+          , volume: sum $ volume <$> exercise.sets
+          }
+        ]
+        history
+
+    volume { weight, reps } = weight * Int.toNumber reps
 
 color :: Int -> String
-color index = colors !! (index `mod` length colors) # fromMaybe default
+color index = colors !! (index `mod` length colors) # fromMaybe defaultColor
   where
     colors =
-      [ default
+      [ defaultColor
       , "#EA4235"
       , "#FBBC05"
       , "#33A854"
@@ -187,4 +219,5 @@ color index = colors !! (index `mod` length colors) # fromMaybe default
       , "#FCD050"
       ]
 
-    default = "#4385F4"
+defaultColor :: String
+defaultColor = "#4385F4"
