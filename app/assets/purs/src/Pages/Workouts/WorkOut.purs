@@ -229,6 +229,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
       maxSet /\ setMaxSet <- Hooks.useState Nothing
 
       Hooks.useEffect do
+        -- TODO: Parallelize
         fetchLastExercise exerciseKind.kind setLastExercise
         fetchMaxSet exerciseKind.kind setMaxSet
 

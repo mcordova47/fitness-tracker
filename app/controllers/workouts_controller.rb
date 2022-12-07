@@ -25,7 +25,7 @@ class WorkoutsController < ApplicationController # rubocop:disable Metrics/Class
   end
 
   def todays_session
-    session = @user.workout_sessions.find_by(date: Time.zone.today)
+    session = @user.workout_sessions.includes(exercises: %i[exercise_kind sets]).find_by(date: Time.zone.today)
     respond_to do |format|
       format.json { render json: session }
     end
@@ -35,6 +35,7 @@ class WorkoutsController < ApplicationController # rubocop:disable Metrics/Class
     session =
       @user
       .workout_sessions
+      .includes(exercises: %i[exercise_kind sets])
       .where(
         date: ...Time.zone.today,
         muscle_group: params[:muscle_group]
