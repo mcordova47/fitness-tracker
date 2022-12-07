@@ -333,6 +333,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                         , onChange: setWeight <?| eventTargetValue
                         , type: "number"
                         , value: weight
+                        , min: "0"
                         }
                   ]
                 , H.div "row align-items-center mt-3"
@@ -346,6 +347,8 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                         , onChange: setReps <?| eventTargetValue
                         , type: "number"
                         , value: reps
+                        , min: "0"
+                        , step: "1"
                         }
                   ]
                 , H.button_ "btn btn-primary px-4 mt-3 me-3"
