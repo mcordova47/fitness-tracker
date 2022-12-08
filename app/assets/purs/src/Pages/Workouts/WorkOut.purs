@@ -334,6 +334,9 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                         , type: "number"
                         , value: weight
                         , min: "0"
+                        , autoFocus: true
+                        , key: "weight-input-" <> show setIndex
+                        -- ^ Key helps autoFocus work when going from one set to the next
                         }
                   ]
                 , H.div "row align-items-center mt-3"

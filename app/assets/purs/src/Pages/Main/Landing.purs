@@ -15,7 +15,7 @@ view _ = Hooks.component Hooks.do
     H.div "container text-center py-4"
     [ H.h1 "" "Welcome"
     , H.p ""
-      [ H.text "Swollercoaster helps you track your fitness goals. "
+      [ H.text "Stay on track with Swollercoaster! "
       , H.a_ "" { href: "/workout" } "Click here"
       , H.text " to get started and track your first session!"
       ]
