@@ -49,7 +49,7 @@ view props =
                 { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
                 , name: "Set " <> show (index + 1) <> " Weight"
                 , stroke: color index
-                , strokeWidth: if props.minimal then 1.0 else 2.0
+                , strokeWidth: if props.minimal then 1.5 else 2.0
                 , type: if props.minimal then monotone else linear
                 }
         Volume ->
@@ -57,7 +57,8 @@ view props =
             { dataKey: dataKeyString "volume"
             , name: "Volume"
             , stroke: defaultColor
-            , strokeWidth: 2.0
+            , strokeWidth: if props.minimal then 1.5 else 2.0
+            , type: if props.minimal then monotone else linear
             }
     , not props.minimal &> H.fragment
         [ xAxis
