@@ -6,20 +6,13 @@ module Pages.Workouts.Progress
 import Prelude
 
 import Api as Api
-import Components.Recharts.CartesianGrid (cartesianGrid)
-import Components.Recharts.Line (line, monotone)
-import Components.Recharts.LineChart (lineChart)
+import Components.Dropdown (dropdown)
 import Components.Recharts.ResponsiveContainer (percent, pixels, responsiveContainer)
-import Components.Recharts.Tooltip (tooltip)
-import Components.Recharts.Types.DataKey (dataKeyFunction, dataKeyString)
-import Components.Recharts.XAxis (tickFormatter, xAxis)
-import Components.Recharts.YAxis (yAxis)
-import Data.Array (foldl, length, mapWithIndex, range, (!!))
+import Data.Array (foldl)
 import Data.Array as Array
-import Data.Foldable (maximum, sum)
+import Data.Foldable (sum)
 import Data.Int as Int
 import Data.JSDate (JSDate)
-import Data.JSDate as JSDate
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -28,6 +21,8 @@ import Effect.Class (liftEffect)
 import Elmish (ReactElement)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
+import Pages.Workouts.Progress.Chart (ChartType(..))
+import Pages.Workouts.Progress.Chart as Chart
 import Types.Workouts.Session (Session)
 import Utils.Assets (assetPath)
 import Utils.Html (htmlIf, (&.>))
@@ -36,16 +31,12 @@ type Props =
   { userId :: String
   }
 
-data ChartType
-  = Weight
-  | Volume
-derive instance Eq ChartType
-
 view :: Props -> ReactElement
 view props = Hooks.component Hooks.do
   sessions /\ setSessions <- Hooks.useState Nothing
   exerciseHistory' /\ setExerciseHistory <- Hooks.useState Nothing
   modal /\ setModal <- Hooks.useState Nothing
+  chartType /\ setChartType <- Hooks.useState Weight
   muscleGroup /\ setMuscleGroup <- Hooks.useState Nothing
 
   Hooks.useEffect do
@@ -68,12 +59,12 @@ view props = Hooks.component Hooks.do
   Hooks.useEffect' muscleGroup (liftEffect <<< filterByMuscleGroup)
 
   Hooks.pure $
-    H.div "container-fluid mt-3"
+    H.div "container-fluid mt-2"
     [ H.div "row" $
         case exerciseHistory' of
           Just history
             | Map.isEmpty history ->
-              H.div "col text-center"
+              H.div "col text-center mt-2"
               [ H.h3 "" "Looks like there’s nothing here, yet"
               , H.p "text-muted" "Track your first workout to get started"
               , H.div_ "mx-auto"
@@ -93,21 +84,40 @@ view props = Hooks.component Hooks.do
               [ sessions &.> \s ->
                   s <#> _.muscleGroup # Array.nub # \muscleGroups ->
                     htmlIf (Array.length muscleGroups > 1) $
-                      H.div "col-12"
-                      [ H.strong "d-none d-md-inline me-2" "Filter by:"
-                      , H.div "d-inline-block" $
-                          H.ul "nav nav-pills mb-3" $
-                            muscleGroups <#> \{ id, name } ->
-                              H.li "nav-item" $
-                                H.a_ ("nav-link" <> if muscleGroup == Just id then " active" else "")
+                      H.div "col-12 d-flex justify-content-between pb-2" $
+                      [ dropdown "d-inline-block"
+                          { toggleClass: "btn btn-light"
+                          , toggleContent:
+                              H.span "fa-solid fa-sliders" $
+                                muscleGroup &.> \_ ->
+                                  H.span_ "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+                                    { style: H.css { fontSize: "0.5rem" }
+                                    } $
+                                    [ H.text "1"
+                                    , H.span "visually-hidden" " applied filters"
+                                    ]
+                          } $
+                          H.div "px-3 pt-1 pb-2"
+                          [ H.div "text-muted" "Muscle groups"
+                          , H.div "btn-group-vertical btn-group-sm w-100 mt-2" $
+                              muscleGroups <#> \{ id, name } ->
+                                H.button_ ("btn w-100 btn-" <> if muscleGroup == Just id then "primary" else "outline-primary")
                                   { onClick: setMuscleGroup
                                       if muscleGroup == Just id then
                                         Nothing
                                       else
                                         Just id
-                                  , href: "#"
                                   }
                                   name
+                          ]
+                      , H.div "btn-group"
+                        [ H.button_ ("btn btn-" <> if chartType == Weight then "primary" else "outline-primary")
+                            { onClick: setChartType Weight }
+                            "Weight"
+                        , H.button_ ("btn btn-" <> if chartType == Volume then "primary" else "outline-primary")
+                            { onClick: setChartType Volume }
+                            "Volume"
+                        ]
                       ]
               , H.fragment $
                   history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
@@ -115,16 +125,16 @@ view props = Hooks.component Hooks.do
                       H.div "card lift mb-3" $
                         H.div "card-body"
                         [ H.h6_ "card-title text-uppercase text-secondary"
-                            { onClick: setModal $ Just { exerciseKind: kind, chartType: Weight }, role: "button" }
+                            { onClick: setModal $ Just kind
+                            , role: "button"
+                            }
                             kind
                         , responsiveContainer { height: pixels 300.0 } $
-                            lineChart { data: setHistories } $
-                              maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 <#> \index ->
-                                line
-                                  { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
-                                  , type: monotone
-                                  , stroke: color index
-                                  }
+                            Chart.view
+                              { chartType
+                              , data': setHistories
+                              , minimal: true
+                              }
                         ]
               ]
           Nothing ->
@@ -134,7 +144,7 @@ view props = Hooks.component Hooks.do
               , H.span "sr-only" "Loading…"
               ]
     , fromMaybe H.empty do
-        { exerciseKind, chartType } <- modal
+        exerciseKind <- modal
         history <- exerciseHistory'
         setHistories <- Map.lookup exerciseKind history
         pure $ H.fragment
@@ -146,40 +156,21 @@ view props = Hooks.component Hooks.do
                   , H.button_ "btn-close" { onClick: setModal Nothing } H.empty
                   ]
                 , H.div "modal-body"
-                  [ H.div "d-flex justify-content-center mt-n2 mb-2"
-                    [ H.button_ ("btn btn-sm me-1 btn-" <> if chartType == Weight then "primary" else "outline-primary")
-                        { onClick: setModal $ Just { exerciseKind, chartType: Weight } }
-                        "Weight"
-                    , H.button_ ("btn btn-sm ms-1 btn-" <> if chartType == Volume then "primary" else "outline-primary")
-                        { onClick: setModal $ Just { exerciseKind, chartType: Volume } }
-                        "Volume"
-                    ]
-                  , responsiveContainer { height: percent 90.0 } $
-                      lineChart { data: setHistories }
-                      [ case chartType of
-                          Weight -> H.fragment $
-                            maximum (length <<< _.weights <$> setHistories) # fromMaybe 0 # (_ - 1) # range 0 # mapWithIndex \index _ ->
-                              line
-                                { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
-                                , name: "Set " <> show (index + 1) <> " Weight"
-                                , stroke: color index
-                                , strokeWidth: 2.0
-                                }
-                          Volume ->
-                            line
-                              { dataKey: dataKeyString "volume"
-                              , name: "Volume"
-                              , stroke: defaultColor
-                              , strokeWidth: 2.0
-                              }
-                      , xAxis
-                          { dataKey: dataKeyString "date"
-                          , tickFormatter: tickFormatter JSDate.toDateString
-                          }
-                      , yAxis {}
-                      , cartesianGrid { strokeDasharray: "3 3" }
-                      , tooltip {}
+                  [ H.div "mt-n2 mb-2 text-center" $
+                      H.div "btn-group btn-group-sm"
+                      [ H.button_ ("btn btn-" <> if chartType == Weight then "primary" else "outline-primary")
+                          { onClick: setChartType Weight }
+                          "Weight"
+                      , H.button_ ("btn btn-" <> if chartType == Volume then "primary" else "outline-primary")
+                          { onClick: setChartType Volume }
+                          "Volume"
                       ]
+                  , responsiveContainer { height: percent 90.0 } $
+                      Chart.view
+                        { chartType
+                        , data': setHistories
+                        , minimal: false
+                        }
                   ]
                 ]
           , H.div "modal-backdrop fade show" H.empty
@@ -203,21 +194,3 @@ exerciseHistory = foldl insertExerciseHistories Map.empty
         history
 
     volume { weight, reps } = weight * Int.toNumber reps
-
-color :: Int -> String
-color index = colors !! (index `mod` length colors) # fromMaybe defaultColor
-  where
-    colors =
-      [ defaultColor
-      , "#EA4235"
-      , "#FBBC05"
-      , "#33A854"
-      , "#FF6D02"
-      , "#46BDC6"
-      , "#7BAAF7"
-      , "#F07B72"
-      , "#FCD050"
-      ]
-
-defaultColor :: String
-defaultColor = "#4385F4"
