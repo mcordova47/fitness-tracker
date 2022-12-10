@@ -27,6 +27,7 @@ import Utils.Html ((&>))
 type Props =
   { chartType :: ChartType
   , data' :: Array { date :: JSDate, weights :: Array Number, volume :: Number }
+  , keyPrefix :: String
   , minimal :: Boolean
   }
 
@@ -47,6 +48,7 @@ view props =
             <#> \index ->
               line
                 { dataKey: dataKeyFunction (_.weights >>> (_ !! index))
+                , key: props.keyPrefix <> "-weight-" <> show index
                 , name: "Set " <> show (index + 1) <> " Weight"
                 , stroke: color index
                 , strokeWidth: if props.minimal then 1.5 else 2.0
@@ -55,6 +57,7 @@ view props =
         Volume ->
           line
             { dataKey: dataKeyString "volume"
+            , key: props.keyPrefix <> "-volume"
             , name: "Volume"
             , stroke: defaultColor
             , strokeWidth: if props.minimal then 1.5 else 2.0

@@ -27,6 +27,7 @@ import Elmish.React.Import (ImportedReactComponent)
 type LineProps =
   { type :: Opt LineType
   , dataKey :: DataKey
+  , key :: Opt String
   , name :: Opt String
   , stroke :: Opt String
   , strokeWidth :: Opt Number

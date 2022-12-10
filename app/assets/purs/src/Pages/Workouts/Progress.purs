@@ -132,6 +132,7 @@ view props = Hooks.component Hooks.do
                         , responsiveContainer { height: pixels 300.0 } $
                             Chart.view
                               { chartType
+                              , keyPrefix: "preview"
                               , data': setHistories
                               , minimal: true
                               }
@@ -168,6 +169,7 @@ view props = Hooks.component Hooks.do
                   , responsiveContainer { height: percent 90.0 } $
                       Chart.view
                         { chartType
+                        , keyPrefix: "detail"
                         , data': setHistories
                         , minimal: false
                         }
