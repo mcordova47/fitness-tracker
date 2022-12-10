@@ -6,7 +6,6 @@ module Pages.Workouts.Progress
 import Prelude
 
 import Api as Api
-import Components.Dropdown (dropdown)
 import Components.Recharts.ResponsiveContainer (percent, pixels, responsiveContainer)
 import Data.Array (foldl)
 import Data.Array as Array
@@ -23,6 +22,7 @@ import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
 import Pages.Workouts.Progress.Chart (ChartType(..))
 import Pages.Workouts.Progress.Chart as Chart
+import Pages.Workouts.Progress.Filters as Filters
 import Types.Workouts.Session (Session)
 import Utils.Assets (assetPath)
 import Utils.Html (htmlIf, (&.>))
@@ -85,31 +85,11 @@ view props = Hooks.component Hooks.do
                   s <#> _.muscleGroup # Array.nub # \muscleGroups ->
                     htmlIf (Array.length muscleGroups > 1) $
                       H.div "col-12 d-flex justify-content-between pb-2" $
-                      [ dropdown "d-inline-block"
-                          { toggleClass: "btn btn-light"
-                          , toggleContent:
-                              H.span "fa-solid fa-sliders" $
-                                muscleGroup &.> \_ ->
-                                  H.span_ "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
-                                    { style: H.css { fontSize: "0.5rem" }
-                                    } $
-                                    [ H.text "1"
-                                    , H.span "visually-hidden" " applied filters"
-                                    ]
-                          } $
-                          H.div "px-3 pt-1 pb-2"
-                          [ H.div "text-muted" "Muscle groups"
-                          , H.div "btn-group-vertical btn-group-sm w-100 mt-2" $
-                              muscleGroups <#> \{ id, name } ->
-                                H.button_ ("btn w-100 btn-" <> if muscleGroup == Just id then "primary" else "outline-primary")
-                                  { onClick: setMuscleGroup
-                                      if muscleGroup == Just id then
-                                        Nothing
-                                      else
-                                        Just id
-                                  }
-                                  name
-                          ]
+                      [ Filters.view
+                          { muscleGroup
+                          , muscleGroups
+                          , setMuscleGroup
+                          }
                       , H.div "btn-group"
                         [ H.button_ ("btn btn-" <> if chartType == Weight then "primary" else "outline-primary")
                             { onClick: setChartType Weight }
