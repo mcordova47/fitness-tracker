@@ -14,12 +14,12 @@ import Elmish (EffectFn1, ReactElement, createElement')
 import Elmish.React.Import (ImportedReactComponent)
 
 type Props =
-  { onChange :: EffectFn1 Option Unit
+  { defaultValue :: Opt (Nullable Option)
+  , onChange :: EffectFn1 Option Unit
   , onCreateOption :: EffectFn1 String Unit
   , options :: Array Option
   , placeholder :: Opt String
   , value :: Opt (Nullable Option)
-  , defaultValue :: Opt (Nullable Option)
   }
 
 type Option =

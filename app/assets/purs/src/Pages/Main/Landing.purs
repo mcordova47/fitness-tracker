@@ -12,14 +12,14 @@ type Props = {}
 view :: Props -> ReactElement
 view _ = Hooks.component Hooks.do
   Hooks.pure $
-    H.div "container text-center py-4"
-    [ H.h1 "" "Welcome"
+    H.div "text-center py-4"
+    [ H.h1 "text-3xl" "Welcome"
     , H.p ""
       [ H.text "Stay on track with Swollercoaster! "
-      , H.a_ "" { href: "/workout" } "Click here"
+      , H.a_ "text-blue-500 underline dark:text-white" { href: "/workout" } "Click here"
       , H.text " to get started and track your first session!"
       ]
-    , H.img_ "img-fluid mt-3"
+    , H.img_ "mt-3 mx-auto"
         { src: assetPath "/logo.png"
         , style: H.css { width: "100%", maxWidth: 400 }
         }

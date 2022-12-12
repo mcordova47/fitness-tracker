@@ -19,7 +19,8 @@ import Unsafe.Coerce (unsafeCoerce)
 
 type Props =
   { dataKey :: Opt DataKey
-  , tickFormatter :: TickFormatter
+  , tick :: Opt ReactElement
+  , tickFormatter :: Opt TickFormatter
   }
 
 data TickFormatter

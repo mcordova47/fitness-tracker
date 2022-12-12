@@ -10,7 +10,8 @@ import Prelude
 import Components.Recharts.CartesianGrid (cartesianGrid)
 import Components.Recharts.Line (line, linear, monotone)
 import Components.Recharts.LineChart (lineChart)
-import Components.Recharts.Tooltip (tooltip)
+import Components.Recharts.Tick (tick)
+import Components.Recharts.Tooltip (labelFormatter, tooltip)
 import Components.Recharts.Types.DataKey (dataKeyFunction, dataKeyString)
 import Components.Recharts.XAxis (tickFormatter, xAxis)
 import Components.Recharts.YAxis (yAxis)
@@ -66,11 +67,15 @@ view props =
     , not props.minimal &> H.fragment
         [ xAxis
             { dataKey: dataKeyString "date"
+            , tick: tick {}
             , tickFormatter: tickFormatter JSDate.toDateString
             }
-        , yAxis {}
+        , yAxis { tick: tick {} }
         , cartesianGrid { strokeDasharray: "3 3" }
-        , tooltip {}
+        , tooltip
+            { contentStyle: H.css { background: "rgb(30 41 59)" }
+            , labelFormatter: labelFormatter JSDate.toDateString
+            }
         ]
     ]
 

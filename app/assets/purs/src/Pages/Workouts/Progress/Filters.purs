@@ -6,6 +6,7 @@ module Pages.Workouts.Progress.Filters
 
 import Prelude
 
+import Components.ButtonGroup as ButtonGroup
 import Components.Dropdown (dropdown)
 import Data.Maybe (Maybe(..))
 import Elmish (ReactElement, Dispatch)
@@ -20,35 +21,33 @@ type Props =
   }
 
 view :: Props -> ReactElement
-view props = H.fragment
-  [ H.div "d-none d-md-inline-block" $
-      muscleGroupFilter "btn-group"
-  , dropdown "d-inline-block d-md-none"
-      { toggleClass: "btn btn-light"
+view props = H.div ""
+  [ H.div "hidden md:inline-block" $
+      muscleGroupFilter { vertical: false }
+  , dropdown "inline-block md:hidden"
+      { toggleClass: "px-3 pt-2 pb-1 bg-slate-200 dark:bg-slate-800 rounded-md relative"
       , toggleContent:
           H.span "fa-solid fa-sliders" $
             props.muscleGroup &.> \_ ->
-              H.span_ "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+              H.span_ "absolute top-0 left-full -translate-y-1/2 -translate-x-1/2 rounded-full text-xs text-white bg-cyan-600 h-4 w-4"
                 { style: H.css { fontSize: "0.5rem" }
-                } $
-                [ H.text "1"
-                , H.span "visually-hidden" " applied filters"
-                ]
+                }
+                "1"
       } $
-      H.div "px-3 pt-1 pb-2"
-      [ H.div "text-muted" "Muscle groups"
-      , muscleGroupFilter "btn-group-vertical btn-group-sm w-100 mt-2"
+      H.div "px-3 pt-2 pb-3"
+      [ H.div "text-slate-500 dark:text-white mb-2" "Muscle groups"
+      , muscleGroupFilter { vertical: true }
       ]
   ]
   where
-    muscleGroupFilter className =
-      H.div className $
-        props.muscleGroups <#> \{ id, name } ->
-          H.button_ ("btn w-100 btn-" <> if props.muscleGroup == Just id then "primary" else "outline-primary")
-            { onClick: props.setMuscleGroup
-                if props.muscleGroup == Just id then
-                  Nothing
-                else
-                  Just id
-            }
-            name
+    muscleGroupFilter { vertical } =
+      ButtonGroup.view
+        { onClick: \id -> props.setMuscleGroup
+            if props.muscleGroup == Just id then
+              Nothing
+            else
+              Just id
+        , options: props.muscleGroups <#> \{ id, name } -> { label: name, value: id }
+        , value: props.muscleGroup
+        , vertical
+        }

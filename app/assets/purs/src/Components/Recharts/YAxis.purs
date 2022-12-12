@@ -8,6 +8,7 @@ import Elmish.React.Import (ImportedReactComponent)
 
 type Props =
   { dataKey :: Opt DataKey
+  , tick :: Opt ReactElement
   }
 
 yAxis :: forall props. Closed.Coerce props Props => props -> ReactElement

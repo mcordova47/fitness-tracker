@@ -6,7 +6,11 @@ module Pages.Workouts.WorkOut
 import Prelude
 
 import Api as Api
+import Components.Card (card)
+import Components.Input (input)
+import Components.ListGroup (listGroup, listItem, listItemLink)
 import Components.ReactSelect.CreatableSelect (creatableSelect)
+import Components.Table (table, tbody, tbodyRow, tbodyRow_, td, th, thRow, thead, theadRow)
 import Data.Array (find, null, (!!))
 import Data.Array as Array
 import Data.Foldable (for_, traverse_)
@@ -73,14 +77,14 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         liftEffect $ setView $ ChooseMuscleGroup { modal: true }
 
   Hooks.pure $
-    H.div "container py-4" case view' of
+    H.div "max-w-7xl mx-auto py-4" case view' of
       Loading ->
         H.empty
       ChooseMuscleGroup { modal } ->
         H.fragment
-        [ H.h3 "" "New session"
-        , H.p "text-muted"
-          [ H.button_ "btn btn-link p-0"
+        [ H.h3 "text-3xl" "New session"
+        , H.p "text-slate-500 dark:text-white"
+          [ H.button_ "text-blue-500 underline dark:text-white"
               { onClick: setView $ ChooseMuscleGroup { modal: true } }
               "Choose a muscle group"
           , H.text " to begin."
@@ -89,11 +93,11 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
             modal'
               { content:
                   creatableSelect
-                    { onChange: createSession setView setLastSession _.value
+                    { defaultValue: Nullable.null
+                    , onChange: createSession setView setLastSession _.value
                     , onCreateOption: createSession setView setLastSession identity
                     , options: muscleGroups <#> \{ name } -> { label: name, value: name }
                     , placeholder: "Select muscle group"
-                    , defaultValue: Nullable.null
                     }
               , onDismiss: setView $ ChooseMuscleGroup { modal: false }
               , title: "Which muscle group are you working out today?"
@@ -101,14 +105,13 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         ]
       AddExercises { session, modal } ->
         H.fragment
-        [ H.h3 "" $ session.muscleGroup.name <> " day"
+        [ H.h3 "text-3xl mb-3" $ session.muscleGroup.name <> " day"
         , null session.exercises &>
             H.div "text-muted mb-1" "Add some exercises below to get started"
-        , H.div "list-group"
+        , listGroup ""
           [ H.fragment $ session.exercises # Array.mapWithIndex \index exercise ->
-              H.a_ ("list-group-item d-flex justify-content-between align-items-center group" <> if null exercise.sets then "" else " text-success")
-                { href: "#"
-                , onClick: setView $ AddSets
+              listItemLink ("group flex justify-between" <> if null exercise.sets then "" else " text-green-600 dark:text-green-500")
+                { onClick: setView $ AddSets
                     { exerciseKind: { kind: exercise.kind }
                     , modal: Nothing
                     , session
@@ -129,8 +132,8 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                       , H.text $ pluralize (Array.length exercise.sets) (Singular "set") (Plural "sets")
                       ]
                   ]
-                , H.div "d-md-none group-hover:d-block" $
-                    H.button_ "btn-sm btn-close p-0"
+                , H.div "md:hidden md:group-hover:block" $
+                    H.button_ "text-sm"
                       { onClick: unsafeCoerce $ mkEffectFn1 \e -> do
                           stopPropagation e
                           launchAff_ $
@@ -144,32 +147,30 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                                 }
                             , modal: false
                             }
-                      }
-                      H.empty
+                      } $
+                      H.span "fa fa-close" H.empty
                 ]
-          , H.a_ "list-group-item"
-              { href: "#"
-              , onClick: setView $ AddExercises { session, modal: true }
-              }
+          , listItemLink ""
+              { onClick: setView $ AddExercises { session, modal: true } }
               "+ Add an exercise"
           ]
         , lastSession &.> \{ id, exercises } ->
             H.fragment
-            [ H.h5 "mt-5"
+            [ H.h5 "text-xl mt-10 mb-2"
               [ H.text "Here’s what you did last time "
               , null session.exercises &>
-                  H.button_ "btn btn-link p-0"
+                  H.button_ "text-blue-500 dark:text-white underline text-base"
                     { onClick: launchAff_ do
                         Api.copySessionToToday { sessionId: id, userId } >>= traverse_ \session' ->
                           liftEffect $ setView $ AddExercises { session: session', modal: false }
                     }
                     "(Copy to today’s session)"
               ]
-            , H.ul "list-group" $
+            , listGroup "" $
                 exercises <#> \exercise ->
-                  H.li "list-group-item"
+                  listItem ""
                   [ H.text exercise.kind
-                  , H.span "text-muted"
+                  , H.span "text-slate-500 dark:text-white"
                     [ H.text " · "
                     , H.text $ show $ Array.length exercise.sets
                     , H.text " "
@@ -235,76 +236,73 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
 
       Hooks.pure $
         H.fragment
-        [ H.div ""
-          [ H.a_ ""
-              { href: "#"
-              , onClick: setView $ AddExercises { session, modal: false }
+        [ H.div "mb-3"
+          [ H.a_ "text-blue-500 dark:text-white cursor-pointer"
+              { onClick: setView $ AddExercises { session, modal: false }
               } $
-              H.h3 "d-inline-block" $ session.muscleGroup.name <> " day"
-          , H.h5 "d-inline-block ms-2" $ "> " <> exerciseKind.kind
+              H.h3 "text-3xl inline-block underline underline-offset-2" $ session.muscleGroup.name <> " day"
+          , H.h5 "text-2xl inline-block ml-2" $ "> " <> exerciseKind.kind
           ]
         , fromMaybe H.empty do
             exercise <- session.exercises # find (eq exerciseKind.kind <<< _.kind)
             pure $ H.fragment
               [ null exercise.sets &>
-                  H.div "text-muted mb-1" "Add a new set below to get started"
-              , H.table "table table-hover"
-                [ H.thead "" $
-                    H.tr ""
-                    [ H.th_ "" { scope: "col" } "Weight"
-                    , H.th_ "" { scope: "col" } "Reps"
+                  H.div "text-slate-500 dark:text-white mb-1" "Add a new set below to get started"
+              , table ""
+                [ thead "" $
+                    theadRow ""
+                    [ th "" "Weight"
+                    , th "" "Reps"
                     ]
-                , H.tbody ""
+                , tbody ""
                   [ H.fragment $ exercise.sets <#> \set ->
-                      H.tr_ ""
+                      tbodyRow_ "cursor-pointer hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-white"
                       { onClick: setView $ AddSets { exerciseKind, modal: Just $ ExistingSet set.id, session }
                       }
-                      [ H.th_ "" { scope: "row" } $ show set.weight
-                      , H.td "" $ show set.reps
+                      [ thRow "" $ show set.weight
+                      , td "" $ show set.reps
                       ]
-                  , H.tr_ "cursor-pointer"
+                  , tbodyRow_ "cursor-pointer hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-white"
                     { onClick: setView $ AddSets { exerciseKind, modal: Just NewSet, session } }
-                    [ H.th_ "" { scope: "row" } "+ Add a set"
-                    , H.td "" H.empty
+                    [ thRow "" "+ Add a set"
+                    , td "" H.empty
                     ]
                   ]
                 ]
-              , H.div "row mt-5"
+              , H.div "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16"
                 [ lastExercise &.> \ex ->
-                    H.div "col-12 col-md-6 col-lg-8" $
-                      H.div "card mb-3" $
-                        H.div "card-body"
-                        [ H.h5 "" "Here’s what you did last time"
-                        , H.table "table"
-                          [ H.thead "" $
-                              H.tr ""
-                              [ H.th_ "" { scope: "col" } "Weight"
-                              , H.th_ "" { scope: "col" } "Reps"
+                    H.div "col-span-1 lg:col-span-2" $
+                      card "" $
+                      [ H.h5 "text-xl mb-3" "Here’s what you did last time"
+                      , table ""
+                        [ thead "" $
+                            theadRow ""
+                            [ th "" "Weight"
+                            , th "" "Reps"
+                            ]
+                        , tbody "" $
+                            ex.sets <#> \set ->
+                              tbodyRow ""
+                              [ thRow "" $ show set.weight
+                              , td "" $ show set.reps
                               ]
-                          , H.tbody "" $
-                              ex.sets <#> \set ->
-                                H.tr ""
-                                [ H.th_ "" { scope: "row" } $ show set.weight
-                                , H.td "" $ show set.reps
-                                ]
-                          ]
                         ]
+                      ]
                 , maxSet &.> \{ weight, reps } ->
-                    H.div "col-12 col-md-6 col-lg-4" $
-                      H.div "card mb-3" $
-                        H.div "card-body"
-                        [ H.h5 "" "All-time max"
-                        , H.div "row mt-3"
-                          [ H.div "col-6"
-                            [ H.h6 "text-muted" "Weight"
-                            , H.div "display-4" $ show weight
-                            ]
-                          , H.div "col-6"
-                            [ H.h6 "text-muted" "Reps"
-                            , H.div "display-4" $ show reps
-                            ]
+                    H.div "col-span-1" $
+                      card "mb-3" $
+                      [ H.h5 "text-xl mb-3" "All-time max"
+                      , H.div "columns-2 gap-3 mt-3"
+                        [ H.div ""
+                          [ H.h6 "text-lg text-slate-500 dark:text-white mb-2" "Weight"
+                          , H.div "text-6xl font-light" $ show weight
+                          ]
+                        , H.div ""
+                          [ H.h6 "text-lg text-slate-500 dark:text-white mb-2" "Reps"
+                          , H.div "text-6xl font-light" $ show reps
                           ]
                         ]
+                      ]
                 ]
               , addSetModal s exercise setView
               ]
@@ -322,13 +320,13 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
           Hooks.pure $ modal'
             { content:
                 H.fragment
-                [ H.div "row align-items-center"
-                  [ H.div "col-3" $
+                [ H.div "grid grid-cols-4"
+                  [ H.div "col-span-1" $
                       H.label_ "form-label mb-0"
                         { htmlFor: "weight-input" }
                         "Weight"
-                  , H.div "col-9" $
-                      H.input_ "form-control"
+                  , H.div "col-span-3" $
+                      input ""
                         { id: "weight-input"
                         , onChange: setWeight <?| eventTargetValue
                         , type: "number"
@@ -339,13 +337,13 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                         -- ^ Key helps autoFocus work when going from one set to the next
                         }
                   ]
-                , H.div "row align-items-center mt-3"
-                  [ H.div "col-3" $
+                , H.div "grid grid-cols-4 mt-3"
+                  [ H.div "col-span-1" $
                       H.label_ "form-label mb-0"
                         { htmlFor: "reps-input" }
                         "Reps"
-                  , H.div "col-9" $
-                      H.input_ "form-control"
+                  , H.div "col-span-3" $
+                      input ""
                         { id: "reps-input"
                         , onChange: setReps <?| eventTargetValue
                         , type: "number"
@@ -354,7 +352,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                         , step: "1"
                         }
                   ]
-                , H.button_ "btn btn-primary px-4 mt-3 me-3"
+                , H.button_ "bg-cyan-600 rounded-md text-white px-4 py-1 mt-3 mr-3"
                     { onClick: fromMaybe (pure unit) do
                         weight' <- Number.fromString weight
                         reps' <- Int.fromString reps
@@ -384,7 +382,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                       Just _ -> "Save"
                       Nothing -> "Next set →"
                 , htmlIf (isNothing mSet) $
-                    H.button_ "btn btn-outline-primary px-4 mt-3"
+                    H.button_ "border border-cyan-600 text-cyan-600 dark:text-white rounded-md px-4 py-1 mt-3"
                       { onClick: fromMaybe (pure unit) do
                           weight' <- Number.fromString weight
                           reps' <- Int.fromString reps
@@ -412,14 +410,14 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
 
     modal' { content, onDismiss, title } =
       H.fragment
-      [ H.div "modal fade show d-block" $
-          H.div "modal-dialog modal-dialog-centered modal-lg" $
-            H.div "modal-content"
-            [ H.div "modal-header"
-              [ H.h4 "modal-title" title
-              , H.button_ "btn-close" { onClick: onDismiss } H.empty
-              ]
-            , H.div "modal-body" content
+      [ H.div "fixed inset-0 z-30 flex justify-center items-center" $
+          H.div "bg-white dark:bg-slate-800 max-w-2xl w-full mx-3 rounded-lg"
+          [ H.div "p-3 dark:bg-slate-700 border-b border-slate-200 dark:border-none flex justify-between rounded-t-lg"
+            [ H.h4 "text-2xl" title
+            , H.button_ "" { onClick: onDismiss } $
+                H.span "fa fa-close" H.empty
             ]
-      , H.div "modal-backdrop fade show" H.empty
+          , H.div "p-3" content
+          ]
+      , H.div "fixed inset-0 z-10 bg-slate-900 opacity-80" H.empty
       ]

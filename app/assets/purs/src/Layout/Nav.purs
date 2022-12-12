@@ -12,6 +12,7 @@ import Elmish (ReactElement)
 import Elmish.HTML.Styled as H
 import Elmish.Hooks ((=/>))
 import Elmish.Hooks as Hooks
+import Utils.Html (htmlIf)
 
 type Props r =
   { currentPath :: String
@@ -44,21 +45,28 @@ view { currentPath, userId } =
 view' :: ∀ r. Props' r -> ReactElement
 view' { currentPath, links, mainUrl } =
   Hooks.useState false =/> \expanded setExpanded ->
-    H.nav "navbar navbar-expand-md navbar-light bg-light" $
-      H.div "container-fluid"
-      [ H.a_ "navbar-brand"
+    H.nav "bg-slate-200 dark:bg-slate-800 p-3 flex flex-col gap-2 rounded-sm"
+    [ H.div "flex justify-between"
+      [ H.div "inline-flex gap-4"
+        [ H.a_ "text-lg"
           { href: mainUrl }
           "Swollercoaster"
-      , H.button_ "navbar-toggler"
+        , H.div "hidden md:inline-flex gap-3" $
+            links <#> \{ label, url } ->
+              H.a_ ("pt-0.5" <> if url == currentPath then " underline underline-offset-4" else "")
+                { href: url }
+                label
+        ]
+      , H.button_ "md:hidden"
           { type: "button"
           , onClick: setExpanded (not expanded)
           } $
-          H.span "navbar-toggler-icon" H.empty
-      , H.div ("collapse navbar-collapse" <> if expanded then " show" else "") $
-          H.ul "navbar-nav" $
-            links <#> \{ label, url } ->
-              H.li "nav-item" $
-                H.a_ ("nav-link" <> if url == currentPath then " active" else "")
-                  { href: url }
-                  label
+          H.span "fa fa-bars" H.empty
       ]
+    , htmlIf expanded $
+        H.fragment $
+          links <#> \{ label, url } ->
+            H.a_ ("pt-0.5" <> if url == currentPath then " underline underline-offset-4" else "")
+              { href: url }
+              label
+    ]

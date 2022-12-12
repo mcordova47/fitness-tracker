@@ -56,7 +56,7 @@ dropdown' className args = Hooks.component Hooks.do
   ref /\ setRef <- Hooks.useRef
 
   Hooks.pure $
-    H.div_ ("dropdown " <> className <> if expanded then " show" else "")
+    H.div_ (className <> " relative")
     { onClick: if args.closeOnClick && expanded then setExpanded false else pure unit
     , ref: setRef
     }
@@ -65,7 +65,7 @@ dropdown' className args = Hooks.component Hooks.do
         args.toggleContent
     , args.content
         { visible: expanded
-        , className: "dropdown-menu show"
+        , className: "absolute left-0 z-10 mt-2 w-56 origin-top-left rounded-md bg-white dark:bg-slate-800 dark:border dark:border-slate-700 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         , closeDropdown: setExpanded false
         }
     , htmlIf expanded $
