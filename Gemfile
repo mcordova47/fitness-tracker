@@ -58,3 +58,5 @@ gem "rack-cors", "~> 1.1"
 gem "sprockets-rails", "~> 3.4"
 
 gem "rubocop", "~> 1.39"
+
+gem "sass-rails", "~> 6.0"
