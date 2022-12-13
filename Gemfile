@@ -60,3 +60,5 @@ gem "sprockets-rails", "~> 3.4"
 gem "rubocop", "~> 1.39"
 
 gem "sass-rails", "~> 6.0"
+
+gem "yui-compressor", "~> 0.12.0"
