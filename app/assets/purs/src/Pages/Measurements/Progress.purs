@@ -7,8 +7,7 @@ module Pages.Measurements.Progress
 import Prelude
 
 import Api.Measurements as Api
-import Components.Recharts.Line (line, monotone)
-import Components.Recharts.LineChart (lineChart)
+import Components.Chart as Chart
 import Components.Recharts.ResponsiveContainer (pixels, responsiveContainer)
 import Components.Recharts.Types.DataKey (dataKeyString)
 import Data.Array (foldl)
@@ -47,14 +46,17 @@ view { userId } = Hooks.component Hooks.do
                 H.div "border border-slate-200 dark:border-slate-700 dark:bg-slate-700 rounded-lg" $
                 [ H.h6 "text-slate-500 text-sm border-b border-slate-200 dark:text-white dark:bg-slate-800 dark:border-none p-4 uppercase rounded-t-lg"
                     bodyPart
-                , responsiveContainer { height: pixels 300.0 } $
-                    lineChart { data: ms } $
-                      line
-                        { dataKey: dataKeyString "value"
-                        , name: "Measurement"
-                        , stroke: "#4385F4"
-                        , strokeWidth: 1.5
-                        , type: monotone
+                , H.div "p-4" $
+                    responsiveContainer { height: pixels 300.0 } $
+                      Chart.view
+                        { data': ms
+                        , lines:
+                            [ { dataKey: dataKeyString "value"
+                              , key: bodyPart
+                              , name: "Measurement"
+                              }
+                            ]
+                        , minimal: true
                         }
                 ]
 
