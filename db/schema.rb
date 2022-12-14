@@ -10,10 +10,31 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_12_07_142521) do
+ActiveRecord::Schema[7.0].define(version: 2022_12_14_010453) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "plpgsql"
+
+  create_table "measurements_body_parts", force: :cascade do |t|
+    t.string "name"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_measurements_body_parts_on_name", unique: true
+    t.index ["user_id"], name: "index_measurements_body_parts_on_user_id"
+  end
+
+  create_table "measurements_measurements", force: :cascade do |t|
+    t.float "value"
+    t.bigint "body_part_id", null: false
+    t.date "date"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["body_part_id"], name: "index_measurements_measurements_on_body_part_id"
+    t.index ["date"], name: "index_measurements_measurements_on_date", unique: true
+    t.index ["user_id"], name: "index_measurements_measurements_on_user_id"
+  end
 
   create_table "users", force: :cascade do |t|
     t.string "slug", null: false
@@ -65,6 +86,9 @@ ActiveRecord::Schema[7.0].define(version: 2022_12_07_142521) do
     t.index ["exercise_id"], name: "index_workouts_sets_on_exercise_id"
   end
 
+  add_foreign_key "measurements_body_parts", "users"
+  add_foreign_key "measurements_measurements", "measurements_body_parts", column: "body_part_id", on_delete: :cascade
+  add_foreign_key "measurements_measurements", "users"
   add_foreign_key "workouts_exercise_kinds", "users"
   add_foreign_key "workouts_exercises", "workouts_sessions", column: "session_id", on_delete: :cascade
   add_foreign_key "workouts_sessions", "users"
