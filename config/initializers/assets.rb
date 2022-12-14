@@ -15,6 +15,7 @@ Rails.application.config.assets.paths << Rails.root.join('node_modules')
 # folder are already added.
 Rails.application.config.assets.precompile += %w[
   src/EntryPoints/Main/Landing.purs
+  src/EntryPoints/Measurements/Progress.purs
   src/EntryPoints/Workouts/Progress.purs
   src/EntryPoints/Workouts/WorkOut.purs
 ]

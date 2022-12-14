@@ -33,14 +33,15 @@ view { currentPath, userId } =
     { currentPath
     , mainUrl: href "progress"
     , links:
-        [ { label: "View progress", url: href "progress" }
-        , { label: "Work out", url: href "workout" }
+        [ { label: "View progress", url: href "workouts/progress" }
+        , { label: "Gains", url: href "measurements/progress" }
+        , { label: "Work out", url: href "workouts/workout" }
         ]
     , userId
     }
   where
     href page =
-      "/" <> userId <> "/workouts/" <> page
+      "/" <> userId <> "/" <> page
 
 view' :: ∀ r. Props' r -> ReactElement
 view' { currentPath, links, mainUrl } =

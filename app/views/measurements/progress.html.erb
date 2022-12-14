@@ -1,0 +1,10 @@
+<%=
+  elmish_component(
+    "Measurements/Progress",
+    props: {
+      currentPath: request.path,
+      userId: @user_id
+    },
+    html_class: "h-100"
+  )
+%>

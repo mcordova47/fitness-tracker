@@ -5,7 +5,7 @@ module Pages.Workouts.Progress
 
 import Prelude
 
-import Api as Api
+import Api.Workouts as Api
 import Components.ButtonGroup as ButtonGroup
 import Components.Recharts.ResponsiveContainer (pixels, responsiveContainer)
 import Data.Array (foldl)
@@ -61,69 +61,68 @@ view props = Hooks.component Hooks.do
 
   Hooks.pure $
     H.div "mt-3"
-    [ H.div "row" $
-        case exerciseHistory' of
-          Just history
-            | Map.isEmpty history ->
-              H.div "text-center mt-3"
-              [ H.h3 "text-2xl mb-2" "Looks like there’s nothing here, yet"
-              , H.p "text-slate-500 dark:text-slate-200" "Track your first workout to get started"
-              , H.div_ "mx-auto mt-3"
-                  { style: H.css
-                      { background: "url(" <> assetPath "/empty-gym.png" <> ")"
-                      , backgroundSize: "cover"
-                      , height: 400
-                      , maxHeight: "100%"
-                      , width: 400
-                      , maxWidth: "100%"
-                      , boxShadow: "inset 0 0 150px white"
-                      }
-                  }
-                  H.empty
-              ]
-            | otherwise -> H.fragment
-              [ sessions &.> \s ->
-                  s <#> _.muscleGroup # Array.nub # \muscleGroups ->
-                    htmlIf (Array.length muscleGroups > 1) $
-                      H.div "flex justify-between pb-3" $
-                      [ Filters.view
-                          { muscleGroup
-                          , muscleGroups
-                          , setMuscleGroup
-                          }
-                      , ButtonGroup.view
-                          { onClick: setChartType
-                          , options:
-                              [ { label: "Weight", value: Weight }
-                              , { label: "Volume", value: Volume }
-                              ]
-                          , value: Just chartType
-                          }
-                      ]
-              , H.div "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" $
-                  history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
-                    H.div "border border-slate-200 dark:border-slate-700 dark:bg-slate-700 rounded-lg" $
-                    [ H.h6_ "text-slate-500 text-sm border-b border-slate-200 dark:text-white dark:bg-slate-800 dark:border-none p-4 uppercase rounded-t-lg"
-                        { onClick: setModal $ Just kind
-                        , role: "button"
+    [ case exerciseHistory' of
+        Just history
+          | Map.isEmpty history ->
+            H.div "text-center mt-3"
+            [ H.h3 "text-2xl mb-2" "Looks like there’s nothing here, yet"
+            , H.p "text-slate-500 dark:text-slate-200" "Track your first workout to get started"
+            , H.div_ "mx-auto mt-3"
+                { style: H.css
+                    { background: "url(" <> assetPath "/empty-gym.png" <> ")"
+                    , backgroundSize: "cover"
+                    , height: 400
+                    , maxHeight: "100%"
+                    , width: 400
+                    , maxWidth: "100%"
+                    , boxShadow: "inset 0 0 150px white"
+                    }
+                }
+                H.empty
+            ]
+          | otherwise -> H.fragment
+            [ sessions &.> \s ->
+                s <#> _.muscleGroup # Array.nub # \muscleGroups ->
+                  htmlIf (Array.length muscleGroups > 1) $
+                    H.div "flex justify-between pb-3" $
+                    [ Filters.view
+                        { muscleGroup
+                        , muscleGroups
+                        , setMuscleGroup
                         }
-                        kind
-                    , H.div "p-4" $
-                        responsiveContainer { height: pixels 300.0 } $
-                          Chart.view
-                            { chartType
-                            , keyPrefix: "preview"
-                            , data': setHistories
-                            , minimal: true
-                            }
+                    , ButtonGroup.view
+                        { onClick: setChartType
+                        , options:
+                            [ { label: "Weight", value: Weight }
+                            , { label: "Volume", value: Volume }
+                            ]
+                        , value: Just chartType
+                        }
                     ]
-              ]
-          Nothing ->
-            H.div "absolute top-0 bottom-0 left-0 right-0 flex justify-center items-center" $
-              H.div "animate-ping text-white text-4xl"
-              [ H.text "❤️"
-              , H.span "sr-only" "Loading…"
-              ]
+            , H.div "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" $
+                history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
+                  H.div "border border-slate-200 dark:border-slate-700 dark:bg-slate-700 rounded-lg" $
+                  [ H.h6_ "text-slate-500 text-sm border-b border-slate-200 dark:text-white dark:bg-slate-800 dark:border-none p-4 uppercase rounded-t-lg"
+                      { onClick: setModal $ Just kind
+                      , role: "button"
+                      }
+                      kind
+                  , H.div "p-4" $
+                      responsiveContainer { height: pixels 300.0 } $
+                        Chart.view
+                          { chartType
+                          , keyPrefix: "preview"
+                          , data': setHistories
+                          , minimal: true
+                          }
+                  ]
+            ]
+        Nothing ->
+          H.div "absolute top-0 bottom-0 left-0 right-0 flex justify-center items-center" $
+            H.div "animate-ping text-white text-4xl"
+            [ H.text "❤️"
+            , H.span "sr-only" "Loading…"
+            ]
     , fromMaybe H.empty do
         exerciseKind <- modal
         history <- exerciseHistory'

@@ -6,6 +6,11 @@ Rails.application.routes.draw do
     get 'workout'
   end
 
+  namespace :measurements, path: ':user_id/measurements' do
+    get 'progress'
+    get 'measurements'
+  end
+
   namespace :workouts, path: ':user_id/workouts' do
     get 'progress'
     get 'workout'

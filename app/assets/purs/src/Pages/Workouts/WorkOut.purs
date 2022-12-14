@@ -5,7 +5,7 @@ module Pages.Workouts.WorkOut
 
 import Prelude
 
-import Api as Api
+import Api.Workouts as Api
 import Components.Card (card)
 import Components.Input (input)
 import Components.ListGroup (listGroup, listItem, listItemLink)
