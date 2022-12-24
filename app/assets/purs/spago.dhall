@@ -6,6 +6,7 @@
   , "argonaut-core"
   , "arrays"
   , "console"
+  , "control"
   , "debug"
   , "effect"
   , "either"
@@ -27,7 +28,6 @@
   , "undefined-is-not-a-problem"
   , "unsafe-coerce"
   , "web-dom"
-  , "web-events"
   , "web-html"
   ]
 , packages = ./packages.dhall

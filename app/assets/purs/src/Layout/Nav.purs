@@ -8,11 +8,11 @@ module Layout.Nav
 
 import Prelude
 
-import Elmish (ReactElement)
+import Elmish (ReactElement, (<|))
 import Elmish.HTML.Styled as H
 import Elmish.Hooks ((=/>))
 import Elmish.Hooks as Hooks
-import Utils.Html (htmlIf)
+import Utils.Html ((&>))
 
 type Props r =
   { currentPath :: String
@@ -60,11 +60,11 @@ view' { currentPath, links, mainUrl } =
         ]
       , H.button_ "md:hidden"
           { type: "button"
-          , onClick: setExpanded (not expanded)
+          , onClick: setExpanded <| not expanded
           } $
           H.span "fa fa-bars" H.empty
       ]
-    , htmlIf expanded $
+    , expanded &>
         H.fragment $
           links <#> \{ label, url } ->
             H.a_ ("pt-0.5" <> if url == currentPath then " underline underline-offset-4" else "")

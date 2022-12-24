@@ -14,10 +14,10 @@ htmlIf :: Boolean -> ReactElement -> ReactElement
 htmlIf p content =
   if p then content else H.empty
 
-infixr 2 htmlIf as &>
+infixr 0 htmlIf as &>
 
 maybeHtml :: ∀ a. Maybe a -> (a -> ReactElement) -> ReactElement
 maybeHtml x f =
   maybe H.empty f x
 
-infixr 2 maybeHtml as &.>
+infixr 0 maybeHtml as &.>

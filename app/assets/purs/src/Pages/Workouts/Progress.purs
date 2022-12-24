@@ -18,7 +18,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
-import Elmish (ReactElement)
+import Elmish (ReactElement, (<|))
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
 import Pages.Workouts.Progress.Chart (ChartType(..))
@@ -26,7 +26,7 @@ import Pages.Workouts.Progress.Chart as Chart
 import Pages.Workouts.Progress.Filters as Filters
 import Types.Workouts.Session (Session)
 import Utils.Assets (assetPath)
-import Utils.Html (htmlIf, (&.>))
+import Utils.Html ((&.>), (&>))
 
 type Props =
   { userId :: String
@@ -83,7 +83,7 @@ view props = Hooks.component Hooks.do
           | otherwise -> H.fragment
             [ sessions &.> \s ->
                 s <#> _.muscleGroup # Array.nub # \muscleGroups ->
-                  htmlIf (Array.length muscleGroups > 1) $
+                  Array.length muscleGroups > 1 &>
                     H.div "flex justify-between pb-3" $
                     [ Filters.view
                         { muscleGroup
@@ -103,7 +103,7 @@ view props = Hooks.component Hooks.do
                 history # (Map.toUnfoldable :: _ -> Array _) <#> \(kind /\ setHistories) ->
                   H.div "border border-slate-200 dark:border-slate-700 dark:bg-slate-700 rounded-lg" $
                   [ H.h6_ "text-slate-500 text-sm border-b border-slate-200 dark:text-white dark:bg-slate-800 dark:border-none p-4 uppercase rounded-t-lg"
-                      { onClick: setModal $ Just kind
+                      { onClick: setModal <| Just kind
                       , role: "button"
                       }
                       kind
@@ -131,7 +131,7 @@ view props = Hooks.component Hooks.do
           H.div "fixed top-0 left-0 right-0 bottom-0 bg-white dark:bg-slate-700 flex flex-col" $
           [ H.div "flex w-full justify-between p-4 dark:bg-slate-800 border-b border-slate-200 dark:border-none"
             [ H.h2 "text-3xl" exerciseKind
-            , H.button_ "text-slate-500 dark:text-slate-300 dark:hover:text-slate-100 text-3xl" { onClick: setModal Nothing } $
+            , H.button_ "text-slate-500 dark:text-slate-300 dark:hover:text-slate-100 text-3xl" { onClick: setModal <| Nothing } $
                 H.span "fa fa-xmark" H.empty
             ]
           , H.div "grow flex flex-col"

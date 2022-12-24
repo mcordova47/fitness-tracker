@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Undefined.NoProblem (Opt, (!))
 import Data.Undefined.NoProblem.Closed as Closed
-import Elmish (ReactElement, Dispatch)
+import Elmish (Dispatch, ReactElement, (<|))
 import Elmish.HTML.Styled as H
 
 type Props value =
@@ -24,7 +24,7 @@ view props' =
         <> (if vertical then " first:rounded-t-md last:rounded-b-md border-x border-t last:border-b" else " first:rounded-l-md last:rounded-r-md border-y border-l last:border-r")
         <> (if props.value == Just value then " bg-cyan-600 text-white" else " text-cyan-600 dark:text-white")
         )
-        { onClick: props.onClick value
+        { onClick: props.onClick <| \_ -> value
         }
         label
   where

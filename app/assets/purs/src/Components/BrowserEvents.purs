@@ -4,17 +4,17 @@ module Components.BrowserEvents
   , browserEvents
   ) where
 
-import Prelude
 
 import Data.Undefined.NoProblem (Opt)
-import Elmish (EffectFn1, createElement')
+import Elmish (createElement')
+import Elmish.HTML.Events as E
 import Elmish.React.Import (ImportedReactComponent, ImportedReactComponentConstructor)
 import Foreign (Foreign)
 
 type Event = Foreign
 
 type Props =
-  ( mouseup :: Opt (EffectFn1 Event Unit)
+  ( mouseup :: Opt (E.EventHandler E.MouseEvent)
   )
 
 browserEvents :: ImportedReactComponentConstructor Props

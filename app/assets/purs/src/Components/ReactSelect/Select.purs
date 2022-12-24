@@ -5,16 +5,16 @@ module Components.ReactSelect.Select
   )
   where
 
-import Prelude
 
 import Data.Nullable (Nullable)
 import Data.Undefined.NoProblem (Opt)
 import Data.Undefined.NoProblem.Closed as Closed
-import Elmish (EffectFn1, ReactElement, createElement')
+import Elmish (ReactElement, createElement')
+import Elmish.HTML.Events as E
 import Elmish.React.Import (ImportedReactComponent)
 
 type Props =
-  { onChange :: EffectFn1 Option Unit
+  { onChange :: E.EventHandler Option
   , options :: Array Option
   , placeholder :: Opt String
   , value :: Opt (Nullable Option)

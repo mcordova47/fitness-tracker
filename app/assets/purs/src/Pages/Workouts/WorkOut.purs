@@ -22,18 +22,16 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Elmish (EffectFn1, ReactElement, mkEffectFn1, (<?|))
+import Elmish (ReactElement, (<|))
+import Elmish.HTML.Events as E
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
 import Types.Workouts.ExerciseKind (ExerciseKind)
 import Types.Workouts.MuscleGroup (MuscleGroup)
 import Types.Workouts.Session (Session)
-import Unsafe.Coerce (unsafeCoerce)
 import Utils.Array (updateWhere)
-import Utils.Events (eventTargetValue)
-import Utils.Html (htmlIf, (&.>), (&>))
+import Utils.Html ((&.>), (&>))
 import Utils.String (Plural(..), Singular(..), pluralize)
-import Web.Event.Event (stopPropagation)
 
 type Props =
   { exerciseKinds :: Array ExerciseKind
@@ -85,7 +83,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         [ H.h3 "text-3xl" "New session"
         , H.p "text-slate-500 dark:text-white"
           [ H.button_ "text-blue-500 underline dark:text-white"
-              { onClick: setView $ ChooseMuscleGroup { modal: true } }
+              { onClick: setView <| ChooseMuscleGroup { modal: true } }
               "Choose a muscle group"
           , H.text " to begin."
           ]
@@ -99,7 +97,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                     , options: muscleGroups <#> \{ name } -> { label: name, value: name }
                     , placeholder: "Select muscle group"
                     }
-              , onDismiss: setView $ ChooseMuscleGroup { modal: false }
+              , onDismiss: setView <| ChooseMuscleGroup { modal: false }
               , title: "Which muscle group are you working out today?"
               }
         ]
@@ -111,7 +109,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         , listGroup ""
           [ H.fragment $ session.exercises # Array.mapWithIndex \index exercise ->
               listItemLink ("group flex justify-between" <> if null exercise.sets then "" else " text-green-600 dark:text-green-500")
-                { onClick: setView $ AddSets
+                { onClick: setView <| AddSets
                     { exerciseKind: { kind: exercise.kind }
                     , modal: Nothing
                     , session
@@ -134,8 +132,8 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                   ]
                 , H.div "md:hidden md:group-hover:block" $
                     H.button_ "text-sm"
-                      { onClick: unsafeCoerce $ mkEffectFn1 \e -> do
-                          stopPropagation e
+                      { onClick: E.handleEffect \e -> do
+                          E.stopPropagation e
                           launchAff_ $
                             Api.deleteExercise { userId, exerciseId: exercise.id }
                           setView $ AddExercises
@@ -151,7 +149,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                       H.span "fa fa-close" H.empty
                 ]
           , listItemLink ""
-              { onClick: setView $ AddExercises { session, modal: true } }
+              { onClick: setView <| AddExercises { session, modal: true } }
               "+ Add an exercise"
           ]
         , lastSession &.> \{ id, exercises } ->
@@ -160,7 +158,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
               [ H.text "Here’s what you did last time "
               , null session.exercises &>
                   H.button_ "text-blue-500 dark:text-white underline text-base"
-                    { onClick: launchAff_ do
+                    { onClick: E.handleEffect $ launchAff_ do
                         Api.copySessionToToday { sessionId: id, userId } >>= traverse_ \session' ->
                           liftEffect $ setView $ AddExercises { session: session', modal: false }
                     }
@@ -188,7 +186,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                     , placeholder: "Select an exercise"
                     , defaultValue: Nullable.null
                     }
-              , onDismiss: setView $ AddExercises { session, modal: false }
+              , onDismiss: setView <| AddExercises { session, modal: false }
               , title: "What’s up next?"
               }
         ]
@@ -207,15 +205,15 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
       Api.maxSet userId kind
         >>= liftEffect <<< setMaxSet
 
-    createSession :: ∀ opt. (View -> Effect Unit) -> (Maybe Session -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
-    createSession setView setLastSession toValue = mkEffectFn1 \mg -> launchAff_ do
+    createSession :: ∀ opt. (View -> Effect Unit) -> (Maybe Session -> Effect Unit) -> (opt -> String) -> E.EventHandler opt
+    createSession setView setLastSession toValue = E.handleEffect \mg -> launchAff_ do
       mSession <- Api.createSession { muscleGroup: toValue mg, userId }
       for_ mSession \session -> do
         liftEffect $ setView $ AddExercises { session, modal: false }
         fetchLastSession session setLastSession
 
-    createExercise :: ∀ opt. Session -> (View -> Effect Unit) -> (opt -> String) -> EffectFn1 opt Unit
-    createExercise session setView toValue = mkEffectFn1 \e -> launchAff_ do
+    createExercise :: ∀ opt. Session -> (View -> Effect Unit) -> (opt -> String) -> E.EventHandler opt
+    createExercise session setView toValue = E.handleEffect \e -> launchAff_ do
       let kind = toValue e
       mExercise <- Api.createExercise { kind, userId }
       for_ mExercise \exercise ->
@@ -238,7 +236,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
         H.fragment
         [ H.div "mb-3"
           [ H.a_ "text-blue-500 dark:text-white cursor-pointer"
-              { onClick: setView $ AddExercises { session, modal: false }
+              { onClick: setView <| AddExercises { session, modal: false }
               } $
               H.h3 "text-3xl inline-block underline underline-offset-2" $ session.muscleGroup.name <> " day"
           , H.h5 "text-2xl inline-block ml-2" $ "> " <> exerciseKind.kind
@@ -257,13 +255,13 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                 , tbody ""
                   [ H.fragment $ exercise.sets <#> \set ->
                       tbodyRow_ "cursor-pointer hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-white"
-                      { onClick: setView $ AddSets { exerciseKind, modal: Just $ ExistingSet set.id, session }
+                      { onClick: setView <| AddSets { exerciseKind, modal: Just $ ExistingSet set.id, session }
                       }
                       [ thRow "" $ show set.weight
                       , td "" $ show set.reps
                       ]
                   , tbodyRow_ "cursor-pointer hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-white"
-                    { onClick: setView $ AddSets { exerciseKind, modal: Just NewSet, session } }
+                    { onClick: setView <| AddSets { exerciseKind, modal: Just NewSet, session } }
                     [ thRow "" "+ Add a set"
                     , td "" H.empty
                     ]
@@ -328,7 +326,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                   , H.div "col-span-3" $
                       input ""
                         { id: "weight-input"
-                        , onChange: setWeight <?| eventTargetValue
+                        , onChange: setWeight <| E.inputText
                         , type: "number"
                         , value: weight
                         , min: "0"
@@ -345,7 +343,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                   , H.div "col-span-3" $
                       input ""
                         { id: "reps-input"
-                        , onChange: setReps <?| eventTargetValue
+                        , onChange: setReps <| E.inputText
                         , type: "number"
                         , value: reps
                         , min: "0"
@@ -353,7 +351,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                         }
                   ]
                 , H.button_ "bg-cyan-600 rounded-md text-white px-4 py-1 mt-3 mr-3"
-                    { onClick: fromMaybe (pure unit) do
+                    { onClick: E.handleEffect $ fromMaybe (pure unit) do
                         weight' <- Number.fromString weight
                         reps' <- Int.fromString reps
                         pure $ launchAff_ do
@@ -381,9 +379,9 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                     case mSet of
                       Just _ -> "Save"
                       Nothing -> "Next set →"
-                , htmlIf (isNothing mSet) $
+                , isNothing mSet &>
                     H.button_ "border border-cyan-600 text-cyan-600 dark:text-white rounded-md px-4 py-1 mt-3"
-                      { onClick: fromMaybe (pure unit) do
+                      { onClick: E.handleEffect $ fromMaybe (pure unit) do
                           weight' <- Number.fromString weight
                           reps' <- Int.fromString reps
                           pure $ launchAff_ do
@@ -404,7 +402,7 @@ view { exerciseKinds, muscleGroups, userId } = Hooks.component Hooks.do
                       }
                       "Done"
                 ]
-            , onDismiss: setView $ AddSets { exerciseKind, modal: Nothing, session }
+            , onDismiss: setView <| AddSets { exerciseKind, modal: Nothing, session }
             , title: "How’d set " <> show (setIndex + 1) <> " go?"
             }
 

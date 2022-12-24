@@ -8,16 +8,17 @@ module Components.Dropdown
 import Prelude
 
 import Components.BrowserEvents (browserEvents)
+import Control.Alternative (guard)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Elmish (ReactElement, mkEffectFn1)
+import Elmish (ReactElement, (<?|), (<|))
+import Elmish.HTML.Events as E
 import Elmish.HTML.Styled as H
 import Elmish.Hooks as Hooks
-import Unsafe.Coerce (unsafeCoerce)
-import Utils.Html (htmlIf)
+import Utils.Html ((&>))
+import Web.DOM.Element as Element
 import Web.DOM.Node as Node
-import Web.Event.Event as E
 import Web.HTML.HTMLDivElement as Div
 
 type Args = BaseArgs ()
@@ -57,21 +58,21 @@ dropdown' className args = Hooks.component Hooks.do
 
   Hooks.pure $
     H.div_ (className <> " relative")
-    { onClick: if args.closeOnClick && expanded then setExpanded false else pure unit
+    { onClick: setExpanded <?| (guard (args.closeOnClick && expanded) *> Just false)
     , ref: setRef
     }
     [ H.button_ args.toggleClass
-        { onClick: setExpanded $ not expanded }
+        { onClick: setExpanded <| not expanded }
         args.toggleContent
     , args.content
         { visible: expanded
         , className: "absolute left-0 z-10 mt-2 w-56 origin-top-left rounded-md bg-white dark:bg-slate-800 dark:border dark:border-slate-700 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         , closeDropdown: setExpanded false
         }
-    , htmlIf expanded $
+    , expanded &>
         browserEvents
-        { mouseup: mkEffectFn1 \event ->
-            unlessM (isWithinTreeOf (Div.toNode <$> ref) (eventTargetNode event)) $
+        { mouseup: E.handleEffect \(E.MouseEvent event) ->
+            unlessM (isWithinTreeOf (Div.toNode <$> ref) $ Just $ Element.toNode event.target) $
               setExpanded false
         }
     ]
@@ -84,5 +85,3 @@ dropdown' className args = Hooks.component Hooks.do
         pure true
       else
         isWithinTreeOf (Just root) =<< Node.parentNode nested
-
-    eventTargetNode event = (unsafeCoerce event :: E.Event) # E.target >>= Node.fromEventTarget
